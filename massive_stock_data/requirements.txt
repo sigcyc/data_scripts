@@ -1,0 +1,4 @@
+polars
+pandas
+lxml
+requests
