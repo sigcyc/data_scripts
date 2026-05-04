@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Futures Report - Project Guide</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --border: #30363d;
+      --text: #e6edf3;
+      --text-muted: #8b949e;
+      --accent: #58a6ff;
+      --accent-dim: #1f6feb;
+      --green: #3fb950;
+      --orange: #d29922;
+      --red: #f85149;
+      --purple: #bc8cff;
+      --code-bg: #0d1117;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    /* ---- Navigation ---- */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 260px;
+      height: 100vh;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 24px 16px;
+      overflow-y: auto;
+      z-index: 10;
+    }
+
+    nav h2 {
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      margin-bottom: 16px;
+    }
+
+    nav a {
+      display: block;
+      color: var(--text);
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 14px;
+      margin-bottom: 2px;
+      transition: background 0.15s;
+    }
+
+    nav a:hover, nav a.active {
+      background: rgba(88, 166, 255, 0.1);
+      color: var(--accent);
+    }
+
+    nav .nav-section {
+      margin-top: 20px;
+    }
+
+    /* ---- Main content ---- */
+    main {
+      margin-left: 260px;
+      max-width: 900px;
+      padding: 48px 48px 120px;
+    }
+
+    h1 {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    h1 span { color: var(--accent); }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 16px;
+      margin-bottom: 40px;
+    }
+
+    h2 {
+      font-size: 24px;
+      font-weight: 600;
+      margin-top: 56px;
+      margin-bottom: 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+    }
+
+    h3 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-top: 32px;
+      margin-bottom: 12px;
+      color: var(--accent);
+    }
+
+    p { margin-bottom: 16px; }
+
+    /* ---- Cards ---- */
+    .card-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin: 24px 0;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px;
+      transition: border-color 0.2s;
+    }
+
+    .card:hover {
+      border-color: var(--accent-dim);
+    }
+
+    .card-title {
+      font-weight: 600;
+      font-size: 15px;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .card-title .icon {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      flex-shrink: 0;
+    }
+
+    .icon-py   { background: var(--accent-dim); }
+    .icon-data { background: #238636; }
+    .icon-doc  { background: #6e40c9; }
+    .icon-cfg  { background: #d29922; }
+
+    .card p {
+      color: var(--text-muted);
+      font-size: 13px;
+      margin: 0;
+    }
+
+    /* ---- Code blocks ---- */
+    pre {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px 20px;
+      overflow-x: auto;
+      margin: 16px 0;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    code {
+      font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+      font-size: 13px;
+    }
+
+    :not(pre) > code {
+      background: rgba(110, 118, 129, 0.2);
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+
+    .comment { color: var(--text-muted); }
+    .keyword { color: var(--red); }
+    .string  { color: var(--green); }
+    .func    { color: var(--purple); }
+    .num     { color: var(--orange); }
+
+    /* ---- Pipeline / Flow ---- */
+    .pipeline {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin: 32px 0;
+      flex-wrap: wrap;
+    }
+
+    .pipeline-step {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 20px;
+      text-align: center;
+      min-width: 140px;
+    }
+
+    .pipeline-step .step-num {
+      font-size: 11px;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+    }
+
+    .pipeline-step .step-label {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .pipeline-step .step-file {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: monospace;
+      margin-top: 4px;
+    }
+
+    .pipeline-arrow {
+      font-size: 20px;
+      color: var(--text-muted);
+      padding: 0 8px;
+    }
+
+    /* ---- Table ---- */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 14px;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    td code {
+      color: var(--accent);
+    }
+
+    /* ---- Badges ---- */
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .badge-py   { background: rgba(31, 111, 235, 0.2); color: var(--accent); }
+    .badge-data { background: rgba(35, 134, 54, 0.2); color: var(--green); }
+    .badge-dir  { background: rgba(188, 140, 255, 0.2); color: var(--purple); }
+
+    /* ---- Callout ---- */
+    .callout {
+      border-left: 3px solid var(--accent);
+      background: rgba(88, 166, 255, 0.06);
+      padding: 14px 18px;
+      border-radius: 0 8px 8px 0;
+      margin: 20px 0;
+    }
+
+    .callout.warn {
+      border-color: var(--orange);
+      background: rgba(210, 153, 34, 0.06);
+    }
+
+    .callout strong {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .callout p { margin: 0; font-size: 14px; }
+
+    /* ---- Tree ---- */
+    .tree {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 20px 24px;
+      font-family: monospace;
+      font-size: 13px;
+      line-height: 1.8;
+      margin: 16px 0;
+    }
+
+    .tree .dir  { color: var(--accent); font-weight: 600; }
+    .tree .file { color: var(--text); }
+    .tree .desc { color: var(--text-muted); }
+
+    /* ---- Responsive ---- */
+    @media (max-width: 900px) {
+      nav { display: none; }
+      main { margin-left: 0; padding: 24px; }
+      .card-grid { grid-template-columns: 1fr; }
+      .pipeline { flex-direction: column; }
+      .pipeline-arrow { transform: rotate(90deg); }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ===== SIDEBAR ===== -->
+<nav>
+  <h2>Futures Report</h2>
+  <a href="#overview">Overview</a>
+  <a href="#structure">Project Structure</a>
+
+  <div class="nav-section">
+    <h2>Scripts</h2>
+    <a href="#save-futures">save_futures.py</a>
+    <a href="#extract-e-mini">extract_e_mini.py</a>
+    <a href="#save-futures-report">save_futures_report.py</a>
+    <a href="#study">study.py</a>
+    <a href="#test">test.py</a>
+  </div>
+
+  <div class="nav-section">
+    <h2>Data</h2>
+    <a href="#data-files">Data Files</a>
+    <a href="#columns">Column Reference</a>
+  </div>
+
+  <div class="nav-section">
+    <h2>Usage</h2>
+    <a href="#pipeline">Data Pipeline</a>
+    <a href="#how-to-run">How to Run</a>
+    <a href="#dependencies">Dependencies</a>
+  </div>
+</nav>
+
+<!-- ===== MAIN ===== -->
+<main>
+
+  <!-- ---- Overview ---- -->
+  <section id="overview">
+    <h1><span>Futures Report</span> Project Guide</h1>
+    <p class="subtitle">
+      A data pipeline for downloading, extracting, and analyzing CFTC Commitments of Traders (COT) report data for E-Mini S&amp;P 500 futures.
+    </p>
+
+    <p>
+      This project automates the full workflow of obtaining weekly CFTC Traders in Financial Futures (TFF) reports,
+      filtering for E-Mini S&amp;P 500 futures contracts, converting the data to a typed Parquet file,
+      and performing analysis using Polars.
+    </p>
+
+    <div class="callout">
+      <strong>What is the COT Report?</strong>
+      <p>
+        Every Friday at 3:30 PM ET, the CFTC publishes the Commitments of Traders report reflecting
+        positions as of the prior Tuesday close. It breaks down open interest by trader category:
+        <strong>Dealers</strong>, <strong>Asset Managers</strong>, <strong>Leveraged Money</strong>, and <strong>Other Reportables</strong>.
+      </p>
+    </div>
+  </section>
+
+  <!-- ---- Project Structure ---- -->
+  <section id="structure">
+    <h2>Project Structure</h2>
+
+    <div class="tree">
+      <span class="dir">futures_report/</span><br>
+      ├── <span class="file">save_futures.py</span> <span class="desc"># Step 1: Download CFTC zip archives (2020-2025)</span><br>
+      ├── <span class="file">extract_e_mini.py</span> <span class="desc"># Step 2: Filter E-Mini S&amp;P 500 rows</span><br>
+      ├── <span class="dir">script/</span><br>
+      │   └── <span class="file">save_futures_report.py</span> <span class="desc"># Step 3: Parse CSV → typed Parquet</span><br>
+      ├── <span class="dir">study/</span><br>
+      │   └── <span class="file">study.py</span> <span class="desc"># Step 4: Exploratory analysis</span><br>
+      ├── <span class="file">test.py</span> <span class="desc"># Altair chart prototype</span><br>
+      ├── <span class="dir">cftc_data/</span> <span class="desc"># Downloaded raw yearly data</span><br>
+      │   ├── <span class="file">cftc_data_2020.txt</span><br>
+      │   ├── <span class="file">cftc_data_2021.txt</span><br>
+      │   ├── <span class="file">cftc_data_2022.txt</span><br>
+      │   ├── <span class="file">cftc_data_2023.txt</span><br>
+      │   ├── <span class="file">cftc_data_2024.txt</span><br>
+      │   └── <span class="file">cftc_data_2025.txt</span><br>
+      ├── <span class="file">e-mini-sp500-futures.txt</span> <span class="desc"># Filtered E-Mini data (all years)</span><br>
+      ├── <span class="file">futures_report.parquet</span> <span class="desc"># Final typed dataset</span><br>
+      ├── <span class="dir">docs/</span> <span class="desc"># Documentation</span><br>
+      │   ├── <span class="file">index.html</span> <span class="desc"># This guide</span><br>
+      │   ├── <span class="file">meaning.md</span> <span class="desc"># COT report timing explanation</span><br>
+      │   └── <span class="file">README.md</span><br>
+      ├── <span class="file">plan.md</span> <span class="desc"># Original implementation plan</span><br>
+      ├── <span class="file">README.md</span><br>
+      └── <span class="file">package.json</span> <span class="desc"># Node config (Zed ACP)</span><br>
+    </div>
+
+    <div class="card-grid">
+      <div class="card">
+        <div class="card-title"><span class="icon icon-py">Py</span> Python Scripts</div>
+        <p>4 scripts forming the data pipeline: download, filter, convert, and analyze.</p>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="icon icon-data">D</span> Data Files</div>
+        <p>6 yearly CFTC text files, 1 filtered E-Mini text file, and 1 Parquet output.</p>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="icon icon-doc">?</span> Documentation</div>
+        <p>This guide, a COT timing reference, and the original implementation plan.</p>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="icon icon-cfg">C</span> Config</div>
+        <p>package.json for Zed editor's Claude Code ACP integration.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ---- Scripts ---- -->
+
+  <!-- save_futures.py -->
+  <section id="save-futures">
+    <h2>save_futures.py</h2>
+    <p><span class="badge badge-py">Step 1</span> Downloads CFTC financial futures data archives from 2020 to 2025.</p>
+
+    <h3>What it does</h3>
+    <ol style="margin-left: 20px; margin-bottom: 16px;">
+      <li>Creates a <code>cftc_data/</code> directory if it doesn't exist</li>
+      <li>For each year (2020–2025), downloads <code>fut_fin_txt_{year}.zip</code> from <code>cftc.gov</code></li>
+      <li>Extracts the zip &mdash; each contains a file named <code>FinFutYY.txt</code></li>
+      <li>Renames the extracted file to <code>cftc_data_{year}.txt</code></li>
+      <li>Cleans up zip files after extraction</li>
+    </ol>
+
+    <h3>Source</h3>
+    <pre><code><span class="keyword">import</span> requests, zipfile, os, shutil
+
+BASE_URL = <span class="string">"https://www.cftc.gov/files/dea/history/"</span>
+START_YEAR = <span class="num">2020</span>
+END_YEAR   = <span class="num">2025</span>
+
+<span class="comment"># Downloads fut_fin_txt_{year}.zip for each year</span>
+<span class="comment"># Extracts FinFutYY.txt → renames to cftc_data_{year}.txt</span>
+<span class="comment"># Cleans up zip files after extraction</span></code></pre>
+
+    <h3>Output</h3>
+    <table>
+      <tr><th>File</th><th>Description</th></tr>
+      <tr><td><code>cftc_data/cftc_data_2020.txt</code></td><td>All TFF futures data for 2020</td></tr>
+      <tr><td><code>cftc_data/cftc_data_2021.txt</code></td><td>All TFF futures data for 2021</td></tr>
+      <tr><td colspan="2" style="text-align:center; color:var(--text-muted);">... through 2025</td></tr>
+    </table>
+  </section>
+
+  <!-- extract_e_mini.py -->
+  <section id="extract-e-mini">
+    <h2>extract_e_mini.py</h2>
+    <p><span class="badge badge-py">Step 2</span> Filters the raw CFTC data to extract only E-Mini S&amp;P 500 rows.</p>
+
+    <h3>What it does</h3>
+    <ol style="margin-left: 20px; margin-bottom: 16px;">
+      <li>Iterates through all <code>cftc_data_*.txt</code> files in sorted order</li>
+      <li>Writes the CSV header from the first file</li>
+      <li>For each row, checks if it contains <code>"E-MINI S&amp;P 500"</code> <strong>and not</strong> <code>"MICRO"</code></li>
+      <li>Matching rows are appended to <code>e-mini-sp500-futures.txt</code></li>
+    </ol>
+
+    <h3>Filter logic</h3>
+    <pre><code>SEARCH_TERM = <span class="string">"E-MINI S&P 500"</span>
+
+<span class="keyword">if</span> SEARCH_TERM <span class="keyword">in</span> line <span class="keyword">and</span> <span class="string">"MICRO"</span> <span class="keyword">not in</span> line:
+    f_out.<span class="func">write</span>(line)</code></pre>
+
+    <div class="callout">
+      <strong>Why exclude MICRO?</strong>
+      <p>The CFTC data also includes Micro E-Mini S&amp;P 500 contracts (1/10th the size). The filter ensures only the standard E-Mini contracts ($50 &times; S&amp;P 500 index) are captured.</p>
+    </div>
+
+    <h3>Output</h3>
+    <table>
+      <tr><th>File</th><th>Description</th></tr>
+      <tr><td><code>e-mini-sp500-futures.txt</code></td><td>~304 weekly rows of E-Mini S&amp;P 500 COT data (2020–2025)</td></tr>
+    </table>
+  </section>
+
+  <!-- save_futures_report.py -->
+  <section id="save-futures-report">
+    <h2>script/save_futures_report.py</h2>
+    <p><span class="badge badge-py">Step 3</span> Parses the filtered CSV into a properly typed Polars DataFrame, then saves as Parquet.</p>
+
+    <h3>What it does</h3>
+    <ol style="margin-left: 20px; margin-bottom: 16px;">
+      <li>Reads <code>e-mini-sp500-futures.txt</code> with Polars</li>
+      <li>Identifies which string columns are actually numeric by checking against a known set of text columns</li>
+      <li>Casts columns containing <code>"Pct"</code> or <code>"Conc_"</code> to <code>Float64</code></li>
+      <li>Casts all other numeric columns to <code>Int64</code></li>
+      <li>Parses the date column and creates <code>date</code>, <code>time</code> (datetime), and <code>sym</code> columns</li>
+      <li>Saves the result as <code>futures_report.parquet</code></li>
+    </ol>
+
+    <h3>Column type logic</h3>
+    <pre><code><span class="comment"># Columns kept as strings</span>
+TEXT_COLUMNS = {
+    <span class="string">"Report_Date_as_YYYY-MM-DD"</span>,
+    <span class="string">"Market_and_Exchange_Names"</span>,
+    <span class="string">"CFTC_Contract_Market_Code"</span>,
+    ...
+}
+
+<span class="comment"># Float keywords → Float64</span>
+FLOAT_COLUMN_KEYWORDS = (<span class="string">"Pct"</span>, <span class="string">"Conc_"</span>)
+
+<span class="comment"># Everything else numeric → Int64</span></code></pre>
+
+    <h3>Dependencies</h3>
+    <table>
+      <tr><th>Package</th><th>Purpose</th></tr>
+      <tr><td><code>polars</code></td><td>High-performance DataFrame library</td></tr>
+      <tr><td><code>cyc.ds</code></td><td>Custom data utility (Ds class)</td></tr>
+    </table>
+
+    <h3>Output</h3>
+    <table>
+      <tr><th>File</th><th>Description</th></tr>
+      <tr><td><code>futures_report.parquet</code></td><td>~95 KB typed Parquet with 304 rows, 86+ columns</td></tr>
+    </table>
+  </section>
+
+  <!-- study.py -->
+  <section id="study">
+    <h2>study/study.py</h2>
+    <p><span class="badge badge-py">Step 4</span> Exploratory analysis notebook for studying dealer/fund positioning trends.</p>
+
+    <h3>What it does</h3>
+    <ol style="margin-left: 20px; margin-bottom: 16px;">
+      <li>Loads <code>futures_report.parquet</code> via the custom <code>Df.load_data_single</code> helper</li>
+      <li>Joins stock close price data with <code>df.add_stock('close')</code></li>
+      <li>Computes monthly aggregations of dealer short positions</li>
+      <li>Groups by symbol and month for cross-instrument comparison</li>
+    </ol>
+
+    <h3>Example queries</h3>
+    <pre><code><span class="comment"># Monthly average dealer short positions</span>
+ds.<span class="func">group_by</span>(pl.col(<span class="string">"time"</span>).dt.<span class="func">truncate</span>(<span class="string">"1mo"</span>)).<span class="func">agg</span>(
+    pl.col(<span class="string">"Dealer_Positions_Short_All"</span>).<span class="func">mean</span>()
+)
+
+<span class="comment"># Grouped by symbol + month</span>
+ds.<span class="func">group_by</span>([
+    pl.col(<span class="string">"sym"</span>),
+    pl.col(<span class="string">"time"</span>).dt.<span class="func">truncate</span>(<span class="string">"1mo"</span>)
+]).<span class="func">agg</span>(
+    pl.col(<span class="string">"Dealer_Positions_Short_All"</span>).<span class="func">mean</span>()
+).<span class="func">sort</span>([pl.col(<span class="string">"sym"</span>), pl.col(<span class="string">"time"</span>)])</code></pre>
+  </section>
+
+  <!-- test.py -->
+  <section id="test">
+    <h2>test.py</h2>
+    <p><span class="badge badge-py">Prototype</span> A quick Altair chart prototype (unrelated to the main pipeline).</p>
+
+    <pre><code><span class="keyword">import</span> altair <span class="keyword">as</span> alt
+<span class="keyword">from</span> altair.datasets <span class="keyword">import</span> data
+
+cars = data.<span class="func">cars</span>()
+alt.<span class="func">Chart</span>(cars).<span class="func">mark_point</span>().<span class="func">encode</span>(
+    x=<span class="string">'Horsepower'</span>,
+    y=<span class="string">'Miles_per_Gallon'</span>,
+    color=<span class="string">'Origin'</span>,
+)</code></pre>
+    <p>This file is a standalone experiment with the Altair visualization library and is not part of the data pipeline.</p>
+  </section>
+
+  <!-- ---- Data Files ---- -->
+  <section id="data-files">
+    <h2>Data Files</h2>
+
+    <table>
+      <tr>
+        <th>File</th>
+        <th>Type</th>
+        <th>Size</th>
+        <th>Description</th>
+      </tr>
+      <tr>
+        <td><code>cftc_data/cftc_data_{year}.txt</code></td>
+        <td><span class="badge badge-data">CSV</span></td>
+        <td>~1.8–2.4 MB each</td>
+        <td>Raw CFTC TFF data for all financial futures, one file per year</td>
+      </tr>
+      <tr>
+        <td><code>e-mini-sp500-futures.txt</code></td>
+        <td><span class="badge badge-data">CSV</span></td>
+        <td>~236 KB</td>
+        <td>Filtered: only E-Mini S&amp;P 500 rows across all years</td>
+      </tr>
+      <tr>
+        <td><code>futures_report.parquet</code></td>
+        <td><span class="badge badge-data">Parquet</span></td>
+        <td>~93 KB</td>
+        <td>Final typed dataset with date/time/sym columns added</td>
+      </tr>
+    </table>
+
+    <div class="callout">
+      <strong>Data source</strong>
+      <p>All data originates from the CFTC's public Commitments of Traders (COT) historical data archive at <code>cftc.gov/files/dea/history/</code>. The specific report type is the <strong>Traders in Financial Futures (TFF)</strong> report.</p>
+    </div>
+  </section>
+
+  <!-- ---- Column Reference ---- -->
+  <section id="columns">
+    <h2>Column Reference</h2>
+    <p>The dataset contains ~86 columns. Here are the key groups:</p>
+
+    <h3>Identification</h3>
+    <table>
+      <tr><th>Column</th><th>Type</th><th>Description</th></tr>
+      <tr><td><code>Market_and_Exchange_Names</code></td><td>String</td><td>e.g., "E-MINI S&amp;P 500 STOCK INDEX - CHICAGO MERCANTILE EXCHANGE"</td></tr>
+      <tr><td><code>Report_Date_as_YYYY-MM-DD</code></td><td>Date</td><td>Tuesday position date</td></tr>
+      <tr><td><code>Open_Interest_All</code></td><td>Int64</td><td>Total open interest (all traders)</td></tr>
+    </table>
+
+    <h3>Position Columns (by trader category)</h3>
+    <p>Each category has <code>Long</code>, <code>Short</code>, and <code>Spread</code> variants:</p>
+    <table>
+      <tr><th>Prefix</th><th>Trader Category</th></tr>
+      <tr><td><code>Dealer_Positions_*</code></td><td>Swap dealers (banks, market makers)</td></tr>
+      <tr><td><code>Asset_Mgr_Positions_*</code></td><td>Institutional investors (pensions, funds)</td></tr>
+      <tr><td><code>Lev_Money_Positions_*</code></td><td>Leveraged money (hedge funds, CTAs)</td></tr>
+      <tr><td><code>Other_Rept_Positions_*</code></td><td>Other reportables</td></tr>
+      <tr><td><code>NonRept_Positions_*</code></td><td>Non-reportable (small traders)</td></tr>
+    </table>
+
+    <h3>Change Columns</h3>
+    <p>Prefixed with <code>Change_in_*</code> &mdash; week-over-week change in each position category.</p>
+
+    <h3>Percentage Columns</h3>
+    <p>Prefixed with <code>Pct_of_OI_*</code> &mdash; each category's share of total open interest. Cast to <code>Float64</code>.</p>
+
+    <h3>Concentration Columns</h3>
+    <p>Prefixed with <code>Conc_Gross_*</code> / <code>Conc_Net_*</code> &mdash; position concentration ratios for top 4 and 8 traders. Cast to <code>Float64</code>.</p>
+  </section>
+
+  <!-- ---- Data Pipeline ---- -->
+  <section id="pipeline">
+    <h2>Data Pipeline</h2>
+
+    <div class="pipeline">
+      <div class="pipeline-step">
+        <div class="step-num">Step 1</div>
+        <div class="step-label">Download</div>
+        <div class="step-file">save_futures.py</div>
+      </div>
+      <div class="pipeline-arrow">&rarr;</div>
+      <div class="pipeline-step">
+        <div class="step-num">Step 2</div>
+        <div class="step-label">Filter</div>
+        <div class="step-file">extract_e_mini.py</div>
+      </div>
+      <div class="pipeline-arrow">&rarr;</div>
+      <div class="pipeline-step">
+        <div class="step-num">Step 3</div>
+        <div class="step-label">Convert</div>
+        <div class="step-file">save_futures_report.py</div>
+      </div>
+      <div class="pipeline-arrow">&rarr;</div>
+      <div class="pipeline-step">
+        <div class="step-num">Step 4</div>
+        <div class="step-label">Analyze</div>
+        <div class="step-file">study.py</div>
+      </div>
+    </div>
+
+    <table>
+      <tr><th>Step</th><th>Input</th><th>Output</th><th>Script</th></tr>
+      <tr>
+        <td>1. Download</td>
+        <td>CFTC website (zip archives)</td>
+        <td><code>cftc_data/cftc_data_{year}.txt</code></td>
+        <td><code>save_futures.py</code></td>
+      </tr>
+      <tr>
+        <td>2. Filter</td>
+        <td><code>cftc_data/cftc_data_*.txt</code></td>
+        <td><code>e-mini-sp500-futures.txt</code></td>
+        <td><code>extract_e_mini.py</code></td>
+      </tr>
+      <tr>
+        <td>3. Convert</td>
+        <td><code>e-mini-sp500-futures.txt</code></td>
+        <td><code>futures_report.parquet</code></td>
+        <td><code>script/save_futures_report.py</code></td>
+      </tr>
+      <tr>
+        <td>4. Analyze</td>
+        <td><code>futures_report.parquet</code></td>
+        <td>In-memory analysis</td>
+        <td><code>study/study.py</code></td>
+      </tr>
+    </table>
+  </section>
+
+  <!-- ---- How to Run ---- -->
+  <section id="how-to-run">
+    <h2>How to Run</h2>
+
+    <h3>Full pipeline (from scratch)</h3>
+    <pre><code><span class="comment"># Step 1: Download all CFTC data (2020–2025)</span>
+python save_futures.py
+
+<span class="comment"># Step 2: Extract E-Mini S&P 500 rows</span>
+python extract_e_mini.py
+
+<span class="comment"># Step 3: Convert to typed Parquet</span>
+python script/save_futures_report.py
+
+<span class="comment"># Step 4: Run analysis (interactive / notebook)</span>
+python study/study.py</code></pre>
+
+    <div class="callout warn">
+      <strong>Important</strong>
+      <p>
+        Steps must be run in order. Each script depends on the output of the previous one.
+        Step 1 requires an internet connection to download from <code>cftc.gov</code>.
+        Step 3 requires the <code>cyc</code> custom package to be installed.
+      </p>
+    </div>
+
+    <h3>If data is already downloaded</h3>
+    <p>If <code>cftc_data/</code> already has the yearly text files, skip Step 1:</p>
+    <pre><code><span class="comment"># Skip download, start from filtering</span>
+python extract_e_mini.py
+python script/save_futures_report.py</code></pre>
+
+    <h3>If Parquet already exists</h3>
+    <p>Jump straight to analysis:</p>
+    <pre><code>python study/study.py</code></pre>
+  </section>
+
+  <!-- ---- Dependencies ---- -->
+  <section id="dependencies">
+    <h2>Dependencies</h2>
+
+    <table>
+      <tr><th>Package</th><th>Used By</th><th>Purpose</th></tr>
+      <tr>
+        <td><code>requests</code></td>
+        <td>save_futures.py</td>
+        <td>HTTP downloads from CFTC</td>
+      </tr>
+      <tr>
+        <td><code>polars</code></td>
+        <td>save_futures_report.py, study.py</td>
+        <td>DataFrame operations, CSV/Parquet I/O</td>
+      </tr>
+      <tr>
+        <td><code>cyc</code></td>
+        <td>save_futures_report.py, study.py</td>
+        <td>Custom data utilities (Ds, Df classes)</td>
+      </tr>
+      <tr>
+        <td><code>altair</code></td>
+        <td>test.py</td>
+        <td>Declarative charting (prototype only)</td>
+      </tr>
+    </table>
+
+    <h3>Install</h3>
+    <pre><code>pip install requests polars altair</code></pre>
+    <p>The <code>cyc</code> package is a custom/private dependency required for Step 3 and Step 4.</p>
+  </section>
+
+</main>
+
+<script>
+  // Highlight active nav link on scroll
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks = document.querySelectorAll('nav a');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(link => link.classList.remove('active'));
+        const active = document.querySelector(`nav a[href="#${entry.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -80% 0px' });
+
+  sections.forEach(section => observer.observe(section));
+</script>
+
+</body>
+</html>

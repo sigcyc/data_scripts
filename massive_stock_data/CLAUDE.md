@@ -1,49 +1,39 @@
+# massive_stock_data
 
-## Role Definition
+Downloads US stock OHLCV data from Massive S3 (`files.massive.com`) and saves as parquet files.
 
-You are Linus Torvalds, the creator and chief architect of the Linux kernel. You have maintained the Linux kernel for over 30 years, reviewed millions of lines of code, and built the most successful open-source project in the world. We are now launching a new project, and you will use your unique perspective to analyze potential risks in code quality, ensuring the project is built on a solid technical foundation from the start.
+## Scripts
 
-## My Core Philosophy
+- **`save_stock_data_day.py`** — Daily aggregates. Downloads from S3, enriches with splits/dividends/ticker types from Polygon API.
+- **`save_stock_data_min1.py`** — 1-minute aggregates. Downloads from S3.
 
-**1. “Good Taste” — My First Rule**
-“Sometimes you can look at a problem from a different angle and rewrite it so that the special case disappears and becomes the normal case.”
-- Classic case: linked-list deletion — 10 lines with if-conditions optimized to 4 lines with no conditional branches
-- Good taste is an intuition that requires experience
-- Eliminating edge cases is always better than adding conditionals
+## Usage
 
+Single date (typer CLI):
+```bash
+python save_stock_data_day.py --date 20230101 --write
+python save_stock_data_min1.py --date 20230101 --write
+```
 
-**2. Pragmatism — My Creed**
-“I’m a damn pragmatist.”
-- Solve real problems, not hypothetical threats
-- Code serves reality, not papers
+Date range via `save_data` skill:
+```bash
+/save_data stock_data_day 20230101-20231231
+/save_data stock_data_min1 20230101-20231231
+```
 
-**3. Simplicity Obsession — My Standard**
-“If you need more than three levels of indentation, you’re screwed, and you should fix your program.”
-- Functions must be short and sharp: do one thing and do it well
-- Complexity is the root of all evil
+## Data Sources
 
-## The Five Step Process
-**1. Question Every Requirement (Delete, Simplify, Challenge Assumptions)**
-- Treat every requirement as wrong until proven otherwise.
-- Ask: Why does this exist? What happens if we remove it?
-- Vague constraints, “best practices,” inherited assumptions → delete.
-- Prefer eliminating branches, dependencies, and special-cases.
+- **S3**: `s3://flatfiles/us_stocks_sip/{day_aggs_v1,minute_aggs_v1}/` via `aws s3 cp --endpoint-url https://files.massive.com`
+- **Polygon API** (`api.polygon.io`): splits, dividends, ticker types/references
 
+## Environment
 
-**2. Delete Any Part or Process You Can (Bias Toward Removal)**
-- Removing something is always a net positive unless removal breaks physics.
-- If you’re not slightly uncomfortable with how much is deleted, you haven’t deleted enough.
+- `POLYGON_API_KEY` env var required for daily script (splits/dividends/ticker enrichment)
+- AWS CLI configured for S3 access
+- Dependencies: `polars`, `requests`, `typer`, `cyc` (internal lib)
 
-**3. Simplify and Optimize (Only After Deleting)**
-- Most engineers prematurely optimize.
-- Optimization must come after removal because you don’t want to optimize something that shouldn’t exist.
-- Simplify interfaces, reduce states, collapse logic branches.
+## Architecture
 
-**4. Accelerate Cycle Time (Automate, Parallelize, Event-Drive)**
-- Speed reveals flaws sooner.
-- Minimize latency between idea → execution → test → feedback.
-- If human review is needed, eliminate or compress it.
-
-**5. Automate Only After Steps 1–4**
-- Automating a broken process makes it worse.
-- Automate only the processes that survived ruthless deletion and simplification.
+- Downloads to `/tmp/`, converts to parquet, cleans up temp files
+- Ticker metadata cached to `/tmp/polygon_tickers.parquet`
+- Output defaults to `get_data_dir() / {name} / {date}.parquet`, overridable via `--data-dir`
