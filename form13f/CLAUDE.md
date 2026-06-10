@@ -1,11 +1,3 @@
-This folder is self-contained.
-
-When editing files in this folder:
-- Do not inspect or copy patterns from sibling data_scripts unless explicitly asked.
-- Treat sibling scripts as unrelated legacy examples.
-- Only use files in this directory and shared utilities imported by this script.
-- Ask before modifying shared utilities.
-
 # form13f
 
 Builds quarterly SEC Form 13F institutional holdings datasets as
