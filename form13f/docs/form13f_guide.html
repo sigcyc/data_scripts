@@ -1,0 +1,849 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>form13f dataset guide</title>
+<style>
+  :root {
+    --paper: #FCFCFA;
+    --ink: #1B2229;
+    --muted: #5B6875;
+    --rule: #E3E6E4;
+    --accent: #2A5F8F;
+    --warn: #96591F;
+    --code-bg: #F2F4F3;
+    --card: #F6F8F7;
+    --serif: 'Charter', 'Bitstream Charter', 'Sitka Text', Cambria, Georgia, serif;
+    --sans: 'Avenir Next', 'Avenir', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    --mono: ui-monospace, 'SF Mono', Menlo, 'Cascadia Code', Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper: #14181C;
+      --ink: #D8DEE4;
+      --muted: #8C99A6;
+      --rule: #2A323A;
+      --accent: #85B7E2;
+      --warn: #D9A069;
+      --code-bg: #1B2126;
+      --card: #191F25;
+    }
+  }
+  :root[data-theme="light"] {
+    --paper: #FCFCFA; --ink: #1B2229; --muted: #5B6875; --rule: #E3E6E4;
+    --accent: #2A5F8F; --warn: #96591F; --code-bg: #F2F4F3; --card: #F6F8F7;
+  }
+  :root[data-theme="dark"] {
+    --paper: #14181C; --ink: #D8DEE4; --muted: #8C99A6; --rule: #2A323A;
+    --accent: #85B7E2; --warn: #D9A069; --code-bg: #1B2126; --card: #191F25;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--serif);
+    font-size: 17px;
+    line-height: 1.62;
+  }
+  main { max-width: 920px; margin: 0 auto; padding: 48px 28px 96px; }
+  p, ul, ol { max-width: 70ch; }
+  a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 2px; }
+  a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 2px; }
+  strong { font-weight: 700; }
+
+  /* ---------- header ---------- */
+  .eyebrow {
+    font-family: var(--mono); font-size: 12px; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--muted); margin: 0 0 14px;
+  }
+  h1 {
+    font-family: var(--sans); font-weight: 600; font-size: 40px; line-height: 1.12;
+    letter-spacing: -.01em; margin: 0 0 10px; text-wrap: balance;
+  }
+  .dek { font-size: 19px; color: var(--muted); margin: 0 0 22px; max-width: 62ch; }
+  .meta {
+    display: flex; flex-wrap: wrap; gap: 8px 22px;
+    font-family: var(--sans); font-size: 13px; color: var(--muted);
+    border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
+    padding: 10px 0; margin-bottom: 40px;
+  }
+  .meta b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  /* ---------- headings ---------- */
+  h2 {
+    font-family: var(--sans); font-weight: 600; font-size: 26px; line-height: 1.2;
+    margin: 64px 0 6px; padding-top: 18px; border-top: 1px solid var(--rule);
+    text-wrap: balance;
+  }
+  h2 .no, h3 .no { color: var(--accent); font-family: var(--mono); font-size: .72em; font-weight: 500; margin-right: 10px; }
+  h3 {
+    font-family: var(--sans); font-weight: 600; font-size: 19px;
+    margin: 40px 0 4px; text-wrap: balance;
+  }
+  h4 { font-family: var(--sans); font-weight: 600; font-size: 15.5px; margin: 28px 0 4px; }
+
+  /* ---------- TL;DR ---------- */
+  .tldr {
+    background: var(--card); border: 1px solid var(--rule); border-radius: 6px;
+    padding: 22px 26px 10px; margin: 0 0 36px;
+  }
+  .tldr h2 { border: none; margin: 0 0 12px; padding: 0; font-size: 15px;
+    text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+  .tldr ol { margin: 0; padding-left: 22px; }
+  .tldr li { margin-bottom: 12px; font-size: 15.8px; line-height: 1.55; }
+  .tldr li::marker { font-family: var(--mono); color: var(--accent); font-size: 13px; }
+
+  /* ---------- TOC ---------- */
+  .toc { columns: 2; column-gap: 40px; font-family: var(--sans); font-size: 14px;
+    list-style: none; padding: 0; margin: 0 0 8px; max-width: none; }
+  .toc li { margin-bottom: 6px; break-inside: avoid; }
+  .toc .no { font-family: var(--mono); color: var(--accent); margin-right: 8px; font-size: 12.5px; }
+
+  /* ---------- tables ---------- */
+  .tw { overflow-x: auto; margin: 14px 0 8px; }
+  table { border-collapse: collapse; font-family: var(--sans); font-size: 13.5px;
+    line-height: 1.45; min-width: 100%; }
+  th {
+    font-size: 11px; text-transform: uppercase; letter-spacing: .07em;
+    color: var(--muted); font-weight: 600; text-align: left;
+    padding: 6px 14px 6px 0; border-bottom: 1px solid var(--ink); white-space: nowrap;
+  }
+  td { padding: 7px 14px 7px 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  td.n, th.n { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  td.m { font-family: var(--mono); font-size: 12.5px; white-space: nowrap; }
+  tr.group td {
+    font-size: 11px; text-transform: uppercase; letter-spacing: .07em;
+    color: var(--accent); font-weight: 600; padding-top: 16px; border-bottom: 1px solid var(--rule);
+    font-family: var(--sans);
+  }
+  .cap { font-family: var(--sans); font-size: 12.5px; color: var(--muted); margin: 4px 0 0; max-width: none; }
+
+  /* ---------- stats strip ---------- */
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 1px; background: var(--rule); border: 1px solid var(--rule); border-radius: 6px;
+    overflow: hidden; margin: 18px 0; }
+  .stats > div { background: var(--card); padding: 12px 14px; }
+  .stats .v { font-family: var(--sans); font-weight: 600; font-size: 21px;
+    font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+  .stats .k { font-family: var(--sans); font-size: 11.5px; color: var(--muted); line-height: 1.35; margin-top: 2px; }
+
+  /* ---------- gotchas ---------- */
+  .gotcha {
+    border-left: 3px solid var(--warn); background: var(--card);
+    border-radius: 0 6px 6px 0; padding: 14px 20px 12px; margin: 18px 0;
+  }
+  .gotcha h4 { margin: 0 0 6px; font-size: 15px; }
+  .gotcha h4 .gno { font-family: var(--mono); color: var(--warn); font-weight: 600; margin-right: 8px; font-size: 13px; }
+  .gotcha p { font-size: 15.3px; margin: 6px 0; }
+  .gotcha .do { font-family: var(--sans); font-size: 13.8px; }
+  .gotcha .do b { color: var(--warn); text-transform: uppercase; font-size: 11px; letter-spacing: .07em; margin-right: 6px; }
+
+  /* ---------- code ---------- */
+  pre {
+    background: var(--code-bg); border: 1px solid var(--rule); border-radius: 6px;
+    padding: 14px 18px; overflow-x: auto; font-family: var(--mono);
+    font-size: 13px; line-height: 1.55; margin: 12px 0;
+  }
+  code { font-family: var(--mono); font-size: .86em; background: var(--code-bg);
+    border: 1px solid var(--rule); border-radius: 3px; padding: 1px 5px; }
+  pre code { background: none; border: none; padding: 0; font-size: inherit; }
+  pre .c { color: var(--muted); font-style: italic; }
+
+  /* ---------- diagram ---------- */
+  .diagram { font-family: var(--mono); font-size: 12.5px; line-height: 1.5; margin: 18px 0; }
+  .diagram .box { border: 1px solid var(--rule); border-radius: 6px; padding: 12px 16px; background: var(--card); }
+  .diagram .box .box { background: var(--paper); margin: 10px 0 0; }
+  .diagram .lbl { font-family: var(--sans); font-size: 11px; text-transform: uppercase;
+    letter-spacing: .07em; color: var(--accent); font-weight: 600; display: block; margin-bottom: 4px; }
+  .diagram .dim { color: var(--muted); }
+  .diagram .arrow { text-align: center; color: var(--muted); padding: 6px 0; font-family: var(--sans); font-size: 12.5px; }
+
+  details { border: 1px solid var(--rule); border-radius: 6px; padding: 0 18px; margin: 16px 0; }
+  summary { font-family: var(--sans); font-size: 14px; font-weight: 600; cursor: pointer; padding: 12px 0; }
+  details[open] summary { border-bottom: 1px solid var(--rule); margin-bottom: 8px; }
+  tr.era td { font-family: var(--sans); font-size: 11.5px; color: var(--warn);
+    text-transform: uppercase; letter-spacing: .06em; font-weight: 600; padding-top: 14px; }
+
+  footer { margin-top: 72px; border-top: 1px solid var(--rule); padding-top: 16px;
+    font-family: var(--sans); font-size: 13px; color: var(--muted); }
+  footer p { max-width: none; }
+</style>
+</head>
+<body>
+<main>
+
+<p class="eyebrow">data_scripts / form13f</p>
+<h1>The form13f dataset</h1>
+<p class="dek">Quarterly SEC Form 13F institutional holdings, one parquet per quarter-end
+report period — and a field guide to its sharpest edge: what
+<code>manager_name</code> does and does not tell you, and how to read the
+<code>other_manager*</code> columns.</p>
+
+<div class="meta">
+  <span><b>53</b> quarters, 20130331 → 20260331</span>
+  <span><b>~3.0–3.2M</b> rows / recent quarter</span>
+  <span><b>~8,700</b> filers / recent quarter</span>
+  <span>files: <b>data/YYYYMMDD.parquet</b></span>
+  <span>builder: <b>save_form13f.py</b></span>
+</div>
+
+<section class="tldr" id="tldr">
+<h2>If you read nothing else</h2>
+<ol>
+  <li><strong>Identity is <code>cik</code>, never <code>manager_name</code>.</strong>
+    The name is free-text from the cover page: 1,757 of 13,076 all-time CIKs (13.4%) have two or
+    more spellings across quarters. Cast <code>cik</code> to integer before comparing — the string
+    is inconsistently zero-padded (<code>0001067983</code> Berkshire vs <code>872786</code> BNP Paribas).</li>
+  <li><strong><code>manager_name</code> is the <em>filer</em>, not necessarily the manager.</strong>
+    One filing can cover dozens of managers. The economic managers sit in
+    <code>other_manager_names</code> — 57% of 2025Q1 reported value is on rows that carry them, and
+    the biggest real-world managers (BlackRock Fund Advisors $1.9T, Fidelity's FMR Co LLC $1.0T,
+    Morgan Stanley Smith Barney $605B) <em>never</em> appear in <code>manager_name</code> at all.</li>
+  <li><strong>A row is one block of shares, not one position.</strong> The same filer legitimately
+    reports the same CUSIP on many rows (BlackRock: AAPL on 24 rows, one per subsidiary, 1.14B
+    shares total; Berkshire: 12 rows summing to exactly 300,000,000). Sum rows to get positions.</li>
+  <li><strong><code>other_manager_names</code> is the complete resolved list; <code>other_manager_ciks</code>
+    is a subset.</strong> Only 64% of included-manager entries carry a CIK — never zip the two
+    columns positionally, and match managers by CIK <em>or</em> name.</li>
+  <li><strong><code>value</code> switches units.</strong> Officially $1,000s through period 20220930
+    (though ~14% of filers reported plain dollars anyway), a 95/5 mix at 20221231, clean USD from
+    20230331 on. Normalize per filer, not per quarter.</li>
+  <li><strong>Cross-filing double counting is rare but real.</strong> The included-manager /
+    notice-filing system is designed to report each block once, and mostly does
+    (Millennium ∩ WorldQuant: zero overlapping blocks). The residue concentrates in
+    <code>OTR</code> rows and duplicate registrations — $1.4bn of matched duplicate blocks out of
+    $53T in 2025Q1.</li>
+</ol>
+</section>
+
+<ul class="toc">
+  <li><span class="no">§1</span><a href="#s1">What a 13F filing is</a></li>
+  <li><span class="no">§2</span><a href="#s2">How the dataset is built</a></li>
+  <li><span class="no">§3</span><a href="#s3">Schema reference</a></li>
+  <li><span class="no">§4</span><a href="#s4">The manager model — manager_name &amp; other_manager*</a></li>
+  <li><span class="no">§5</span><a href="#s5">value units and the 2023 break</a></li>
+  <li><span class="no">§6</span><a href="#s6">Securities, tickers, options</a></li>
+  <li><span class="no">§7</span><a href="#s7">Quarter-by-quarter census</a></li>
+  <li><span class="no">§8</span><a href="#s8">Amendments and filing multiplicity</a></li>
+</ul>
+
+<!-- ================================================================ -->
+<h2 id="s1"><span class="no">§1</span>What a 13F filing is</h2>
+
+<p>An <em>institutional investment manager</em> — any entity, or natural person, exercising
+investment discretion over $100M+ of “13(f) securities” — must report those holdings to the SEC
+within 45 days of each calendar quarter end. 13(f) securities are the exchange-traded universe on
+the SEC’s official list: US-listed stocks and ETFs, certain convertibles, and exchange-traded
+options. <strong>Long positions only</strong> — no shorts, no bonds outside the list, no cash, no
+non-US listings.</p>
+
+<p>A filing has two parts that matter here:</p>
+<ul>
+  <li>a <strong>cover page</strong>: the filing manager’s name and CIK, the report type, amendment
+    info, and a numbered <em>“List of Other Included Managers”</em> — managers whose holdings are
+    contained in this filing;</li>
+  <li>an <strong>information table</strong>: one row per block of shares, with issuer, CUSIP,
+    value, share count, put/call flag, investment discretion, voting authority — and column 7,
+    which lists the sequence numbers of the included managers that share discretion over
+    <em>that row</em>.</li>
+</ul>
+
+<p>Three report types exist. <code>13F HOLDINGS REPORT</code>: all of the filer’s reportable
+holdings are in this filing. <code>13F COMBINATION REPORT</code>: some holdings are here, the rest
+are reported inside some other manager’s filing. <code>13F NOTICE</code>: <em>none</em> are here —
+everything is reported by others. This is how fund complexes avoid reporting the same block twice:
+one entity files an umbrella report, and the subsidiaries file notices (or nothing).</p>
+
+<!-- ================================================================ -->
+<h2 id="s2"><span class="no">§2</span>How the dataset is built</h2>
+
+<p><code>save_form13f.py</code> consumes the
+<a href="https://www.sec.gov/data-research/sec-markets-data/form-13f-data-sets">SEC Form 13F
+structured data sets</a> (TSV dumps of every XML filing) rather than crawling EDGAR:</p>
+
+<ol>
+  <li><strong>Window → period.</strong> The SEC packages filings by <em>receipt window</em>, not
+    report period. The script picks the window containing the period’s due date, then keeps only
+    <code>PERIODOFREPORT == period</code> (~92% of a window’s submissions; the rest are stragglers
+    for older periods). Filings for a period that arrive after its window closes are therefore
+    absent.</li>
+  <li><strong>Submission filter.</strong> Keeps <code>13F-HR</code> and <code>13F-HR/A</code> only.
+    <code>13F-NT</code> notices carry no holdings and are dropped — a notice-only manager never
+    appears as a filer (§4, G4).</li>
+  <li><strong>Amendment de-duplication.</strong> Per CIK: the last original-or-RESTATEMENT filing
+    wins; later NEW&nbsp;HOLDINGS amendments are added on top (§8).</li>
+  <li><strong>Merge.</strong> INFOTABLE ⟕ SUBMISSION ⟕ COVERPAGE on accession number; the
+    OTHERMANAGER2 lookup resolves column-7 sequence refs into
+    <code>other_manager_names</code> / <code>other_manager_ciks</code> (§4.2).</li>
+  <li><strong>Tickers.</strong> CUSIP→symbol via OpenFIGI (US composite pass, then any-listing
+    equities-only pass), cached in <code>cache/cusip_ticker.parquet</code> (§6).</li>
+</ol>
+
+<p>Output is one zstd parquet per quarter, sorted by <code>cik</code>, then <code>value</code>
+descending. Known limitations, all inherited from the source or the design above: late filings
+outside the receipt window are missing; the cover page’s <em>reverse</em> manager list
+(OTHERMANAGER.tsv, “other managers reporting <em>for</em> this manager”) is not joined, so a
+combination filer’s file does not say who reports its remaining holdings — that information only
+exists in the other direction, via the umbrella filer’s <code>other_manager*</code> columns;
+<code>figi</code> is null before mid-2023 (the SEC added the column then); and 20130331 has only
+69 filers (XML filing was phased in during 2013 — coverage is full from 20130630).</p>
+
+<!-- ================================================================ -->
+<h2 id="s3"><span class="no">§3</span>Schema reference</h2>
+
+<p>One row per information-table line of an effective filing.</p>
+
+<div class="tw">
+<table>
+  <thead><tr><th>column</th><th>type</th><th>notes</th></tr></thead>
+  <tbody>
+    <tr class="group"><td colspan="3">Filing identity</td></tr>
+    <tr><td class="m">period_of_report</td><td>date</td><td>quarter end; identical for every row in a file</td></tr>
+    <tr><td class="m">cik</td><td>str</td><td>filing manager’s CIK. <strong>Inconsistently zero-padded — cast to int before comparing</strong> (G2)</td></tr>
+    <tr><td class="m">manager_name</td><td>str</td><td>COVERPAGE.FILINGMANAGER_NAME, free text. The <em>filer</em>, not necessarily the manager (§4)</td></tr>
+    <tr><td class="m">filing_date</td><td>date</td><td>date the effective filing was received</td></tr>
+    <tr><td class="m">submission_type</td><td>str</td><td><code>13F-HR</code> or <code>13F-HR/A</code></td></tr>
+    <tr><td class="m">report_type</td><td>str</td><td><code>13F HOLDINGS REPORT</code> or <code>13F COMBINATION REPORT</code> (notices are dropped)</td></tr>
+    <tr><td class="m">is_amendment</td><td>bool</td><td><strong>tri-state:</strong> true / false / null — null means “not an amendment” too (§8)</td></tr>
+    <tr><td class="m">amendment_no</td><td>int</td><td></td></tr>
+    <tr><td class="m">amendment_type</td><td>str</td><td><code>RESTATEMENT</code> or <code>NEW HOLDINGS</code>; null on originals</td></tr>
+    <tr><td class="m">accession_number</td><td>str</td><td>EDGAR accession; the true filing key — a filer can contribute 2+ accessions per period (§8)</td></tr>
+    <tr class="group"><td colspan="3">Security</td></tr>
+    <tr><td class="m">issuer_name</td><td>str</td><td>as reported by the filer (free text, varies across filers)</td></tr>
+    <tr><td class="m">title_of_class</td><td>str</td><td>e.g. <code>COM</code>, <code>CL A</code>, <code>NOTE 0.500%</code></td></tr>
+    <tr><td class="m">cusip</td><td>str</td><td>9 chars, uppercased; the join key for securities</td></tr>
+    <tr><td class="m">figi</td><td>str</td><td>as reported; null before mid-2023</td></tr>
+    <tr><td class="m">deliverable_symbol</td><td>str</td><td>raw OpenFIGI ticker of the instrument itself; bond descriptors for debt (<code>BABA 0.5 06/01/31</code>)</td></tr>
+    <tr><td class="m">underlying_symbol</td><td>str</td><td>equity ticker of the underlier; = deliverable for equities, issuer symbol for Corp/Pfd, null for Govt/Muni/unmapped (§6)</td></tr>
+    <tr class="group"><td colspan="3">Position</td></tr>
+    <tr><td class="m">value</td><td>int</td><td>USD… <strong>but $1,000s before 2023</strong> — see §5 before summing anything across the break</td></tr>
+    <tr><td class="m">shares</td><td>int</td><td>share count, or principal amount when <code>shares_type == "PRN"</code></td></tr>
+    <tr><td class="m">shares_type</td><td>str</td><td><code>SH</code> (99.5% of rows) / <code>PRN</code></td></tr>
+    <tr><td class="m">put_call</td><td>str</td><td><code>Put</code> / <code>Call</code> / null. Option rows report <em>underlying-share equivalents</em> (§6)</td></tr>
+    <tr><td class="m">investment_discretion</td><td>str</td><td><code>SOLE</code> / <code>DFND</code> / <code>OTR</code> — load-bearing for manager semantics (§4.3)</td></tr>
+    <tr class="group"><td colspan="3">Other managers (§4)</td></tr>
+    <tr><td class="m">other_manager</td><td>str</td><td>column 7 verbatim: sequence refs like <code>"1,5"</code> — plus assorted garbage (G5). Kept raw for audit</td></tr>
+    <tr><td class="m">other_manager_names</td><td>str</td><td>resolved names, <code>"; "</code>-joined, ascending sequence order. The complete resolved list</td></tr>
+    <tr><td class="m">other_manager_ciks</td><td>str</td><td>CIKs of resolved managers, same order — <strong>but only for the ~64% of entries that have one</strong> (G6)</td></tr>
+    <tr class="group"><td colspan="3">Voting authority</td></tr>
+    <tr><td class="m">voting_sole / voting_shared / voting_none</td><td>int</td><td>share counts by voting authority; the three roughly partition <code>shares</code></td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ================================================================ -->
+<h2 id="s4"><span class="no">§4</span>The manager model — manager_name &amp; other_manager*</h2>
+
+<p>This is the part of 13F data that everyone gets wrong first. All figures below are from
+<code>20250331.parquet</code> (3,035,099 rows, 7,987 filers, $52.95T as filed) and generalize to
+other quarters.</p>
+
+<h3 id="s41">4.1 One filing, many managers</h3>
+
+<p>Form 13F separates <em>who files</em> from <em>who manages</em>. A parent files one report; the
+subsidiaries, sub-advisers, trust companies — even natural persons — whose holdings it contains
+are enumerated on the cover page as <em>other included managers</em>, and each holdings row points
+at the ones that share investment discretion over that block:</p>
+
+<div class="diagram">
+  <div class="box">
+    <span class="lbl">One 13F-HR filing — accession_number 0000950123-25-…</span>
+    <div class="box">
+      <span class="lbl">Cover page</span>
+      filing manager: CIK + name <span class="dim">→ dataset columns <b>cik</b>, <b>manager_name</b> (every row)</span><br>
+      list of other included managers <span class="dim">(source table OTHERMANAGER2)</span>:<br>
+      &nbsp;&nbsp;seq 1 · name · 13F file number · CIK <span class="dim">(CIK optional — often blank!)</span><br>
+      &nbsp;&nbsp;seq 2 · … &nbsp;&nbsp;seq N · …
+    </div>
+    <div class="box">
+      <span class="lbl">Information table — one row per block</span>
+      issuer · cusip · value · shares · discretion · voting · <b>col 7: "1,5"</b>
+      <span class="dim">← sequence refs into the cover-page list</span>
+    </div>
+  </div>
+  <div class="arrow">column 7 refs × OTHERMANAGER2 lookup, per accession ↓</div>
+  <div class="box">
+    <span class="lbl">Dataset columns, per row</span>
+    other_manager = <b>"1,5"</b> <span class="dim">(verbatim)</span> ·
+    other_manager_names = <b>"Mgr A; Mgr B"</b> ·
+    other_manager_ciks = <b>"0001…; 0001…"</b> <span class="dim">(only entries that have a CIK)</span>
+  </div>
+</div>
+
+<p>Sequence numbers are meaningful only within one accession — <code>"2"</code> in an Alger filing
+is Weatherbie Capital; <code>"2"</code> in a State Street filing is an SSGA entity. The dataset has
+already done the per-accession resolution for you; the raw string is kept for audit only.</p>
+
+<p>How much this matters, in one strip:</p>
+
+<div class="stats">
+  <div><div class="v">46.0%</div><div class="k">of rows have a non-null <code>other_manager</code></div></div>
+  <div><div class="v">35.8%</div><div class="k">of rows resolve to actual <code>other_manager_names</code></div></div>
+  <div><div class="v">57%</div><div class="k">of all reported <em>value</em> sits on rows with other managers</div></div>
+  <div><div class="v">64.3%</div><div class="k">of included-manager entries carry a CIK</div></div>
+  <div><div class="v">81%</div><div class="k">of included-manager CIKs never appear as a filer (1,255 of 1,539)</div></div>
+  <div><div class="v">43,068</div><div class="k">rows name three or more other managers</div></div>
+</div>
+
+<h3 id="s42">4.2 Reading the three columns</h3>
+
+<div class="tw">
+<table>
+  <thead><tr><th>column</th><th>what it is</th><th>trust level</th></tr></thead>
+  <tbody>
+    <tr><td class="m">other_manager</td>
+        <td>Column 7 verbatim. Usually seq refs (<code>"1"</code>, <code>"1,5"</code>, <code>"01"</code>), but filers also write <code>"0"</code>, <code>"NONE"</code>, <code>"N/A"</code>, free-text names, CRD numbers…</td>
+        <td>Audit trail only. Never parse it yourself</td></tr>
+    <tr><td class="m">other_manager_names</td>
+        <td>Names of the refs that resolved against the cover-page list, ascending seq order, <code>"; "</code>-joined. Null when nothing resolved</td>
+        <td><strong>The complete resolved list.</strong> Split on <code>"; "</code></td></tr>
+    <tr><td class="m">other_manager_ciks</td>
+        <td>CIKs of the resolved managers, same seq order — skipping entries whose cover-page listing had no CIK</td>
+        <td>A <em>subset</em> of the names list. Equal split-lengths ⇒ aligned 1:1 with names; shorter ⇒ you cannot tell which CIK belongs to which name</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>The subset relationship is one-directional by construction: a resolved entry always has a name,
+not always a CIK. Empirically the CIK list is never <em>longer</em> than the name list
+(0 rows in 2025Q1), so: equal lengths → safe to zip; unequal → use names only.</p>
+
+<h3 id="s43">4.3 investment_discretion × other managers: the four patterns</h3>
+
+<p><code>investment_discretion</code> says who else has discretion over the row’s block, relative
+to <em>this filing</em>: <code>SOLE</code> — nobody outside the managers this row is filed for;
+<code>DFND</code> (“shared-defined”) — shared among managers <em>all covered by this filing</em>;
+<code>OTR</code> (“shared-other”) — shared with a manager that files its <em>own</em> 13F. Crossing
+that with the presence of other-manager names yields four patterns that cover the whole dataset:</p>
+
+<div class="tw">
+<table>
+  <thead><tr><th>pattern</th><th>meaning</th><th class="n">2025Q1 value</th><th>canonical example</th></tr></thead>
+  <tbody>
+    <tr><td><code>SOLE</code>, no names</td>
+        <td>Filer manages the block itself, alone. The simple case</td>
+        <td class="n">$19.9T</td>
+        <td>Millennium: all 5,787 rows; Vanguard’s main block ($5.2T)</td></tr>
+    <tr><td><code>SOLE</code> + names</td>
+        <td><strong>Parent files on a subsidiary’s behalf; the named manager runs the block.</strong> The filer may have no discretion at all</td>
+        <td class="n">$5.7T</td>
+        <td>BlackRock, Inc. filing one row per sub-adviser; Fred Alger filing for Weatherbie Capital</td></tr>
+    <tr><td><code>DFND</code> + names</td>
+        <td>Discretion shared among managers all inside this filing — block appears once, sharers listed</td>
+        <td class="n">$23.3T</td>
+        <td>State Street: one AAPL row naming 10 SSGA entities; Berkshire naming Warren Buffett + insurance subs</td></tr>
+    <tr><td><code>OTR</code> (± names)</td>
+        <td>Shared with a manager filing separately — <strong>the same block may exist in that other filing too.</strong> The only pattern where cross-filing duplication is expected</td>
+        <td class="n">$1.28T (2.4%)</td>
+        <td>Guardian Point ↔ Mirabella (regulatory-hosting platform), G8</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="cap">DFND/OTR rows without resolved names (~$2.9T) are mostly the “0” / “NONE” garbage of G5, not a fifth pattern.</p>
+
+<h3 id="s44">4.4 Worked examples, real rows</h3>
+
+<h4>BlackRock: one filer, 28 managers, 24 AAPL rows</h4>
+<p>BlackRock, Inc. (cik 2012383) files a combination report — 50,390 rows, $4.76T, naming 28
+included managers. AAPL alone spans 24 rows, one per sub-adviser block, every one
+<code>SOLE</code>: the named subsidiary manages it, the parent merely files. The six largest:</p>
+
+<div class="tw">
+<table>
+  <thead><tr><th class="n">shares</th><th class="n">value ($)</th><th>discr.</th><th class="m">other_manager</th><th>other_manager_names</th></tr></thead>
+  <tbody>
+    <tr><td class="n">415,659,107</td><td class="n">92,330,357,438</td><td>SOLE</td><td class="m">21</td><td>BlackRock Fund Advisors</td></tr>
+    <tr><td class="n">319,739,353</td><td class="n">71,023,702,482</td><td>SOLE</td><td class="m">22</td><td>BlackRock Institutional Trust Company, N.A.</td></tr>
+    <tr><td class="n">121,178,551</td><td class="n">26,917,391,534</td><td>SOLE</td><td class="m">30</td><td>BlackRock Asset Management Ireland Ltd</td></tr>
+    <tr><td class="n">40,417,912</td><td class="n">8,978,030,793</td><td>SOLE</td><td class="m">25</td><td>BlackRock Fund Managers Ltd.</td></tr>
+    <tr><td class="n">39,038,553</td><td class="n">8,671,633,778</td><td>SOLE</td><td class="m">28</td><td>BlackRock (Netherlands) B.V.</td></tr>
+    <tr><td class="n">31,500,824</td><td class="n">6,997,277,991</td><td>SOLE</td><td class="m">18</td><td>BlackRock Investment Management, LLC</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="cap">…18 more rows. Total: 1,140,202,870 shares, $253.3bn. “BlackRock’s AAPL position” = the sum over rows — no row is a duplicate of another.</p>
+
+<h4>State Street: the same structure, collapsed to one row</h4>
+<p>State Street Corp files 4,281 rows for $2.43T — exactly 1.0 rows per CUSIP. Its entire AAPL
+holding is a single <code>DFND</code> row naming ten SSGA entities at once, and <strong>none of
+them has a CIK in the filing</strong>:</p>
+
+<div class="tw">
+<table>
+  <tbody>
+    <tr><td>shares / value</td><td class="n">596,025,766 / $132,395,203,402</td></tr>
+    <tr><td>discretion</td><td>DFND</td></tr>
+    <tr><td class="m">other_manager</td><td class="m">10,11,12,19,2,20,299,5,6,8</td></tr>
+    <tr><td class="m">other_manager_names</td><td>SSGA FUNDS MANAGEMENT, INC.; STATE STREET GLOBAL ADVISORS LIMITED; STATE STREET GLOBAL ADVISORS, LTD.; …; STATE STREET GLOBAL ADVISORS TRUST COMPANY; STATE STREET SAUDI ARABIA FINANCIAL SOLUTIONS CO <em>(10 names)</em></td></tr>
+    <tr><td class="m">other_manager_ciks</td><td class="m">null</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="cap">Contrast with BlackRock: identical corporate reality (a complex of sub-advisers), two entirely different row shapes. Any per-manager attribution logic has to survive both.</p>
+
+<h4>Berkshire: natural persons are managers too</h4>
+<p>Berkshire Hathaway’s AAPL sits on 12 <code>DFND</code> rows — split by insurance subsidiary
+(National Indemnity, GEICO, General Re…), and every row also names
+<strong>“Buffett Warren E”</strong>, a natural person, as a sharing manager. The 12 rows sum to
+exactly 300,000,000 shares in 2025Q1. (Same rows double as the §5 units demo.)</p>
+
+<h4>Millennium ↔ WorldQuant: the linkage that isn’t a duplicate</h4>
+<div class="tw">
+<table>
+  <thead><tr><th>filing</th><th class="n">rows</th><th class="n">value</th><th>pattern</th></tr></thead>
+  <tbody>
+    <tr><td>MILLENNIUM MANAGEMENT LLC (cik 1273087), combination report</td><td class="n">5,787</td><td class="n">$187.9bn</td><td>all SOLE, no other managers</td></tr>
+    <tr><td>WORLDQUANT MILLENNIUM ADVISORS LLC (cik 1745981), holdings report</td><td class="n">413</td><td class="n">$15.9bn</td><td>all DFND, every row naming “MILLENNIUM MANAGEMENT LLC”</td></tr>
+  </tbody>
+</table>
+</div>
+<p class="cap">Overlap between the two filings: <strong>zero</strong> identical (cusip, shares) blocks. Filtering
+<code>manager_name == "MILLENNIUM MANAGEMENT LLC"</code> misses the $15.9bn WorldQuant sleeve entirely;
+adding om-linked rows captures it without double counting.</p>
+
+<h4>The Fidelity constellation</h4>
+<p>Three entities people call “Fidelity”, three different data shapes: <strong>FMR LLC</strong>
+(cik 315066) files $1.57T; <strong>Fidelity Management &amp; Research Co LLC</strong> (cik 35368) —
+the actual mutual-fund adviser — never files, appearing only as an included manager on FMR’s rows
+($1.04T of them); <strong>Geode Capital Management</strong> (cik 1214717), which runs the Fidelity
+index funds, files its own separate $1.27T report. A name-based “Fidelity” query catches
+fragments of this at random.</p>
+
+<h3 id="s45">4.5 Gotchas</h3>
+
+<div class="gotcha" id="g1">
+<h4><span class="gno">G1</span>manager_name is unstable free text</h4>
+<p>It’s whatever the filer typed on that quarter’s cover page. 1,757 of 13,076 all-time filer CIKs
+(13.4%) have 2+ spellings across quarters: “Blackstone Group Inc” → “Blackstone Group Inc.” →
+“Blackstone Inc.”; “NATIXIS ADVISORS, L.P.” → “NATIXIS ADVISORS, LLC”; rebrands like
+“FIRST FINANCIAL HOLDINGS” → “SOUTH STATE CORP” (6 variants on one CIK). Within a single quarter
+file a CIK has exactly one name — drift is across quarters.</p>
+<p class="do"><b>Do</b> group and join on <code>cik</code>; treat <code>manager_name</code> as a display label, taking the latest quarter’s spelling.</p>
+</div>
+
+<div class="gotcha" id="g2">
+<h4><span class="gno">G2</span>cik strings are inconsistently padded</h4>
+<p>Mostly 10-digit zero-padded (<code>"0001067983"</code>), but some filings carry raw unpadded
+strings (<code>"872786"</code> BNP PARIBAS, <code>"1512020"</code> Kepos Capital) — in the same
+column, same quarter. <code>other_manager_ciks</code> has the same disease.</p>
+<p class="do"><b>Do</b> <code>pl.col("cik").cast(pl.Int64)</code> once, immediately, on both columns. Never compare CIKs as strings.</p>
+</div>
+
+<div class="gotcha" id="g3">
+<h4><span class="gno">G3</span>CIKs aren’t eternal either</h4>
+<p>BlackRock filed as cik 1364742 (“BlackRock Inc.”) through 20240630, then re-registered and has
+filed as cik 2012383 (“BlackRock, Inc.”) since 20240930. A naive per-CIK time series shows the
+world’s largest asset manager vanishing and a $4.5T “new manager” appearing in 2024Q3.</p>
+<p class="do"><b>Do</b> maintain a small manual successor map for entities you track; detect candidates by a filer disappearing while another appears with ≈ the same name and value.</p>
+</div>
+
+<div class="gotcha" id="g4">
+<h4><span class="gno">G4</span>The most important managers never appear in manager_name</h4>
+<p>81% of included-manager CIKs (1,255 of 1,539 in 2025Q1) never file — they’re notice filers or
+subsidiaries. That set includes household names, with the value reported on rows naming them:
+BlackRock Fund Advisors ($1.89T), BlackRock Institutional Trust Co ($1.25T), Fidelity’s FMR Co LLC
+($1.04T), J.P. Morgan Investment Management ($677B — named by 5 different filers), Morgan Stanley
+Smith Barney ($605B), Susquehanna Securities ($563B), Merrill’s Managed Account Advisors ($517B),
+Jane Street Options ($344B), GSAM L.P. ($309B). <code>manager_name</code>-only analysis is blind to
+all of them.</p>
+<p class="do"><b>Do</b> search both sides: <code>cik</code> <em>and</em> <code>other_manager_ciks</code>/<code>other_manager_names</code> (recipe in §4.6).</p>
+</div>
+
+<div class="gotcha" id="g5">
+<h4><span class="gno">G5</span>other_manager (raw) is dirty; unresolved ≠ none</h4>
+<p>Of 1,397,337 rows with non-null <code>other_manager</code> in 2025Q1, 22% resolve to nothing:
+<code>"0"</code> (219,036 rows — “no other manager” by convention; seq 0 never exists),
+<code>"NONE"</code>/<code>"None"</code>/<code>"NO"</code>/<code>"N/A"</code> (~40k), free-text
+names where numbers belong (“AQR Capital Mgmt”, “Arax Advisory Partners”, “Vanguard Just Invest”),
+and CRD-like junk numbers (“146898”). There are also 4,271 rows referencing seq
+<code>"1"</code> where the filer simply never supplied a cover-page list.</p>
+<p class="do"><b>Do</b> use <code>other_manager_names is not null</code> as the “has other managers” predicate. Null names means <em>no resolvable</em> other manager — usually genuinely none, occasionally a filer’s clerical failure.</p>
+</div>
+
+<div class="gotcha" id="g6">
+<h4><span class="gno">G6</span>other_manager_ciks systematically undercounts</h4>
+<p>The cover-page CIK field is optional and 35.7% of entries omit it: 1,315,107 resolved name
+entries vs 845,938 CIK entries in 2025Q1. 363,335 rows (33% of resolved rows) have names but
+<em>zero</em> CIKs — including every SSGA entity on every State Street row. CIK-only linkage
+misses entire complexes; and when the lists differ in length, positional pairing of names with
+CIKs is undefined.</p>
+<p class="do"><b>Do</b> treat names as the source of truth for coverage, CIKs as a precision upgrade where present; zip them only when split-lengths match.</p>
+</div>
+
+<div class="gotcha" id="g7">
+<h4><span class="gno">G7</span>Included-manager names are per-filing spellings, in sequence order</h4>
+<p>Each filer types its own version of a sub’s name, so the same entity varies across filings
+(J.P. Morgan Investment Management appears via 5 unrelated filers, spelled their way). Order
+inside <code>other_manager_names</code> is ascending sequence number — an arbitrary cover-page
+numbering, not importance (State Street’s raw refs: <code>10,11,12,19,2,20,299,5,6,8</code>).</p>
+<p class="do"><b>Do</b> normalize (casefold, strip punctuation) before grouping by included-manager name; read nothing into position.</p>
+</div>
+
+<div class="gotcha" id="g8">
+<h4><span class="gno">G8</span>Cross-filing duplication: rare, real, and findable</h4>
+<p>The included-manager system mostly prevents the same block appearing twice (§4.4:
+Millennium ∩ WorldQuant = 0; AllianceBernstein ∩ Equitable = 0; Cubist ∩ Point72 = 3 trivial
+blocks). But a strict scan of 2025Q1 — rows whose single named other manager also files, with an
+identical (cusip, shares) block in that manager’s own filing — still finds 92 duplicated blocks,
+$1.4bn: hedge funds on regulatory-hosting platforms (Guardian Point reports 350,000 APO
+<code>OTR</code> naming Mirabella; Mirabella files the same block <code>SOLE</code>), duplicate
+registrations (Atlantic Union Bankshares, twice, cross-naming itself, $0.62bn), advisers reporting
+a client’s account the client also reports (Advisor OS ↔ MJP Associates, same 150,079 VOO).
+The linkage is often one-directional — B frequently doesn’t name A back.</p>
+<p class="do"><b>Do</b> nothing for market-level aggregates (noise at $53T scale) — but when computing crowding/ownership for a <em>specific</em> security or manager pair, dedupe identical (cusip, shares) blocks across filings linked by <code>other_manager*</code>, and treat <code>OTR</code> rows as the suspect set.</p>
+</div>
+
+<h3 id="s46">4.6 Recipes</h3>
+
+<p>Normalize identity once per session:</p>
+<pre><code>import polars as pl
+
+df = pl.read_parquet("data/20250331.parquet").with_columns(
+    cik_i=pl.col("cik").cast(pl.Int64),                      <span class="c"># G2</span>
+    om_ciks=pl.col("other_manager_ciks").str.split("; ")
+              .list.eval(pl.element().cast(pl.Int64)),
+    om_names=pl.col("other_manager_names").str.split("; "),
+)</code></pre>
+
+<p>Everything a manager touches — as filer <em>or</em> included manager (G4). CIK linkage is
+precise; add a name pattern when the target’s subsidiaries file without CIKs (G6):</p>
+<pre><code>MILLENNIUM = 1273087
+linked = df.filter(
+    (pl.col("cik_i") == MILLENNIUM)
+    | pl.col("om_ciks").list.contains(MILLENNIUM)
+    | pl.col("other_manager_names").str.contains("(?i)millennium management")
+)
+<span class="c"># Millennium 2025Q1: own filing $187.9bn + WorldQuant sleeve $15.9bn, 0 overlap</span></code></pre>
+
+<p>A manager’s position in one security — sum the rows, keep options and principal out:</p>
+<pre><code>brk_aapl = df.filter(
+    (pl.col("cik_i") == 1067983) &amp; (pl.col("cusip") == "037833100")
+    &amp; pl.col("put_call").is_null() &amp; (pl.col("shares_type") == "SH")
+).select(pl.col("shares").sum(), pl.col("value").sum())
+<span class="c"># 12 rows -&gt; exactly 300,000,000 shares</span></code></pre>
+
+<p>Explode included managers safely — names are the full list; attach CIKs only when aligned (G6):</p>
+<pre><code>om = (df.filter(pl.col("om_names").is_not_null())
+        .with_columns(aligned=pl.col("om_names").list.len()
+                      == pl.col("om_ciks").list.len().fill_null(0))
+        .explode("om_names"))
+<span class="c"># group_by("om_names") ≈ per-included-manager attribution (normalize spellings first, G7)</span></code></pre>
+
+<p>Duplicate-block sweep for a security/pair study (G8):</p>
+<pre><code>own = df.select("cik_i", "cusip", "shares")
+suspect = (df.filter(pl.col("om_ciks").list.len() == 1)
+             .with_columns(om=pl.col("om_ciks").list.first())
+             .join(own, left_on=["om", "cusip", "shares"],
+                   right_on=["cik_i", "cusip", "shares"], how="semi"))
+<span class="c"># rows whose named manager's own filing repeats the identical block</span></code></pre>
+
+<!-- ================================================================ -->
+<h2 id="s5"><span class="no">§5</span>value units and the 2023 break</h2>
+
+<p>Form 13F required values rounded to the nearest <strong>$1,000</strong> until the SEC’s
+electronic-filing modernization took effect on 2023-01-03; filings from then on use whole dollars.
+In receipt terms: periods ≤ 20220930 are officially thousands, period 20221231 (filed
+Jan–Feb 2023) is the transition, and periods ≥ 20230331 are dollars. Reality is messier —
+compliance with the old convention was never universal. Bucketing each filer by the ratio of its
+own totals across the break:</p>
+
+<div class="tw">
+<table>
+  <thead><tr><th>period</th><th class="n">filed in $1,000s</th><th class="n">filed in dollars</th><th class="n">ambiguous</th></tr></thead>
+  <tbody>
+    <tr><td>20220930 (official: thousands)</td><td class="n">85.5%</td><td class="n">14.3%</td><td class="n">0.2%</td></tr>
+    <tr><td>20221231 (transition)</td><td class="n">5.2%</td><td class="n">94.6%</td><td class="n">0.1%</td></tr>
+    <tr><td>≥ 20230331</td><td class="n">—</td><td class="n">100%</td><td class="n">—</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>So pre-2023 quarter-level value sums are meaningless mixtures (a seventh of filers inflate the
+sum 1000×), and any per-manager series crossing 2023 has a step. Berkshire’s biggest AAPL row,
+same 669,429,166 shares in consecutive quarters:</p>
+
+<div class="tw">
+<table>
+  <thead><tr><th>period</th><th class="n">shares</th><th class="n">value as filed</th><th>meaning</th></tr></thead>
+  <tbody>
+    <tr><td>20220630</td><td class="n">669,429,166</td><td class="n">91,524,356</td><td>$1,000s → $91.5bn</td></tr>
+    <tr><td>20221231</td><td class="n">669,429,166</td><td class="n">86,841,985,318</td><td>dollars → $86.8bn</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>Per-filer normalization: compare each filer’s pre-2023 total against its own total in a
+clean post-2023 quarter; a ratio near 1000 marks a thousands-filer. Empirically only ~0.2% of
+filers land in the ambiguous middle:</p>
+
+<pre><code>ref = (pl.read_parquet("data/20230630.parquet", columns=["cik", "value"])
+         .group_by(pl.col("cik").cast(pl.Int64)).agg(ref=pl.col("value").sum()))
+q = pl.read_parquet("data/20220630.parquet").with_columns(cik_i=pl.col("cik").cast(pl.Int64))
+kilo = (q.group_by("cik_i").agg(v=pl.col("value").sum())
+          .join(ref, left_on="cik_i", right_on="cik")
+          .filter(pl.col("ref") / pl.col("v") &gt; 100)["cik_i"])   <span class="c"># thousands-filers</span>
+q = q.with_columns(value_usd=pl.when(pl.col("cik_i").is_in(kilo))
+                     .then(pl.col("value") * 1000).otherwise(pl.col("value")))
+<span class="c"># filers absent from the reference quarter need a price sanity check instead</span></code></pre>
+
+<!-- ================================================================ -->
+<h2 id="s6"><span class="no">§6</span>Securities, tickers, options</h2>
+
+<ul>
+  <li><strong><code>cusip</code></strong> is the reliable security key (uppercased, 9 chars).
+    <code>issuer_name</code>/<code>title_of_class</code> are filer-typed free text.</li>
+  <li><strong><code>figi</code></strong> is only populated from mid-2023 (SEC schema addition), and
+    only when the filer supplied it.</li>
+  <li><strong>Symbols are OpenFIGI-derived at build time, not as-of the period.</strong>
+    <code>deliverable_symbol</code> is the instrument’s own FIGI ticker (bond descriptors for
+    debt); <code>underlying_symbol</code> is the equity underlier — equal to the deliverable for
+    equities, parsed from the descriptor for Corp/Pfd (<code>BABA 0.5 06/01/31</code> → BABA),
+    null for Govt/Muni/Mtge and unmapped CUSIPs. Delisted/renamed securities may be null or carry
+    today’s symbol, not the historical one.</li>
+  <li><strong>Options (~4% of rows: 60,279 Put / 61,179 Call in 2025Q1)</strong> are reported as
+    underlying-share equivalents: <code>shares</code> and <code>value</code> describe the
+    <em>underlying</em> shares, flagged by <code>put_call</code>. Include them and you overstate
+    economic exposure; share-ownership studies should filter <code>put_call.is_null()</code>.</li>
+  <li><strong><code>shares_type == "PRN"</code></strong> (16,645 rows) means <code>shares</code> is
+    a principal amount (convertibles etc.), not a count — filter to <code>"SH"</code> when summing
+    share quantities.</li>
+</ul>
+
+<!-- ================================================================ -->
+<h2 id="s7"><span class="no">§7</span>Quarter-by-quarter census</h2>
+
+<p>Row counts and filer counts are directly comparable across quarters; the as-filed value sums
+are <em>not</em> before 20230331 (§5 — the pre-2023 “Σ value” below is a units mixture, shown only
+to make that visible).</p>
+
+<details>
+<summary>All 53 quarters: rows, filers, Σ value as filed</summary>
+<div class="tw">
+<table>
+  <thead><tr><th>period</th><th class="n">rows</th><th class="n">filers</th><th class="n">Σ value (as filed, ×10¹²)</th></tr></thead>
+  <tbody>
+    <tr class="era"><td colspan="4">XML phase-in — partial coverage</td></tr>
+    <tr><td class="m">20130331</td><td class="n">26,307</td><td class="n">69</td><td class="n">0.00</td></tr>
+    <tr class="era"><td colspan="4">official unit $1,000s — ~14% of filers used dollars anyway; sums unreliable</td></tr>
+    <tr><td class="m">20130630</td><td class="n">1,337,940</td><td class="n">3,372</td><td class="n">0.50</td></tr>
+    <tr><td class="m">20130930</td><td class="n">1,405,252</td><td class="n">3,402</td><td class="n">0.46</td></tr>
+    <tr><td class="m">20131231</td><td class="n">1,423,098</td><td class="n">3,704</td><td class="n">0.52</td></tr>
+    <tr><td class="m">20140331</td><td class="n">1,449,886</td><td class="n">3,721</td><td class="n">0.53</td></tr>
+    <tr><td class="m">20140630</td><td class="n">1,479,952</td><td class="n">3,756</td><td class="n">0.38</td></tr>
+    <tr><td class="m">20140930</td><td class="n">1,495,583</td><td class="n">3,750</td><td class="n">0.32</td></tr>
+    <tr><td class="m">20141231</td><td class="n">1,570,505</td><td class="n">4,038</td><td class="n">0.39</td></tr>
+    <tr><td class="m">20150331</td><td class="n">1,558,711</td><td class="n">4,054</td><td class="n">0.45</td></tr>
+    <tr><td class="m">20150630</td><td class="n">1,590,153</td><td class="n">4,069</td><td class="n">0.38</td></tr>
+    <tr><td class="m">20150930</td><td class="n">1,548,368</td><td class="n">4,063</td><td class="n">0.14</td></tr>
+    <tr><td class="m">20151231</td><td class="n">1,582,468</td><td class="n">4,233</td><td class="n">0.19</td></tr>
+    <tr><td class="m">20160331</td><td class="n">1,583,077</td><td class="n">4,196</td><td class="n">0.16</td></tr>
+    <tr><td class="m">20160630</td><td class="n">1,607,440</td><td class="n">4,204</td><td class="n">0.15</td></tr>
+    <tr><td class="m">20160930</td><td class="n">1,592,169</td><td class="n">4,179</td><td class="n">0.15</td></tr>
+    <tr><td class="m">20161231</td><td class="n">1,667,845</td><td class="n">4,349</td><td class="n">0.11</td></tr>
+    <tr><td class="m">20170331</td><td class="n">1,685,743</td><td class="n">4,340</td><td class="n">0.24</td></tr>
+    <tr><td class="m">20170630</td><td class="n">1,658,225</td><td class="n">4,348</td><td class="n">0.24</td></tr>
+    <tr><td class="m">20170930</td><td class="n">1,665,852</td><td class="n">4,331</td><td class="n">0.25</td></tr>
+    <tr><td class="m">20171231</td><td class="n">1,791,760</td><td class="n">4,679</td><td class="n">0.28</td></tr>
+    <tr><td class="m">20180331</td><td class="n">1,798,964</td><td class="n">4,688</td><td class="n">0.29</td></tr>
+    <tr><td class="m">20180630</td><td class="n">1,835,954</td><td class="n">4,693</td><td class="n">0.29</td></tr>
+    <tr><td class="m">20180930</td><td class="n">1,891,150</td><td class="n">4,706</td><td class="n">0.57</td></tr>
+    <tr><td class="m">20181231</td><td class="n">1,893,228</td><td class="n">5,030</td><td class="n">0.24</td></tr>
+    <tr><td class="m">20190331</td><td class="n">1,945,671</td><td class="n">5,019</td><td class="n">0.29</td></tr>
+    <tr><td class="m">20190630</td><td class="n">1,979,166</td><td class="n">4,994</td><td class="n">0.29</td></tr>
+    <tr><td class="m">20190930</td><td class="n">1,948,064</td><td class="n">4,989</td><td class="n">0.31</td></tr>
+    <tr><td class="m">20191231</td><td class="n">2,042,215</td><td class="n">5,398</td><td class="n">0.34</td></tr>
+    <tr><td class="m">20200331</td><td class="n">1,964,502</td><td class="n">5,360</td><td class="n">0.28</td></tr>
+    <tr><td class="m">20200630</td><td class="n">2,000,454</td><td class="n">5,350</td><td class="n">0.32</td></tr>
+    <tr><td class="m">20200930</td><td class="n">2,065,677</td><td class="n">5,340</td><td class="n">0.37</td></tr>
+    <tr><td class="m">20201231</td><td class="n">2,221,738</td><td class="n">5,863</td><td class="n">0.41</td></tr>
+    <tr><td class="m">20210331</td><td class="n">2,286,198</td><td class="n">5,897</td><td class="n">0.45</td></tr>
+    <tr><td class="m">20210630</td><td class="n">2,357,737</td><td class="n">5,949</td><td class="n">0.48</td></tr>
+    <tr><td class="m">20210930</td><td class="n">2,374,825</td><td class="n">5,953</td><td class="n">0.48</td></tr>
+    <tr><td class="m">20211231</td><td class="n">2,514,496</td><td class="n">6,707</td><td class="n">0.49</td></tr>
+    <tr><td class="m">20220331</td><td class="n">2,491,792</td><td class="n">6,728</td><td class="n">0.45</td></tr>
+    <tr><td class="m">20220630</td><td class="n">2,462,584</td><td class="n">6,738</td><td class="n">0.37</td></tr>
+    <tr><td class="m">20220930</td><td class="n">2,408,783</td><td class="n">6,724</td><td class="n">0.36</td></tr>
+    <tr class="era"><td colspan="4">transition — 94.6% dollars / 5.2% thousands</td></tr>
+    <tr><td class="m">20221231</td><td class="n">2,489,916</td><td class="n">6,923</td><td class="n">34.22</td></tr>
+    <tr class="era"><td colspan="4">whole US dollars</td></tr>
+    <tr><td class="m">20230331</td><td class="n">2,474,020</td><td class="n">6,854</td><td class="n">37.11</td></tr>
+    <tr><td class="m">20230630</td><td class="n">2,497,229</td><td class="n">6,913</td><td class="n">40.78</td></tr>
+    <tr><td class="m">20230930</td><td class="n">2,614,289</td><td class="n">6,946</td><td class="n">40.71</td></tr>
+    <tr><td class="m">20231231</td><td class="n">2,648,713</td><td class="n">7,179</td><td class="n">45.38</td></tr>
+    <tr><td class="m">20240331</td><td class="n">2,634,390</td><td class="n">7,223</td><td class="n">48.82</td></tr>
+    <tr><td class="m">20240630</td><td class="n">2,791,210</td><td class="n">7,284</td><td class="n">53.90</td></tr>
+    <tr><td class="m">20240930</td><td class="n">2,830,603</td><td class="n">7,347</td><td class="n">56.19</td></tr>
+    <tr><td class="m">20241231</td><td class="n">2,967,376</td><td class="n">7,947</td><td class="n">59.16</td></tr>
+    <tr><td class="m">20250331</td><td class="n">3,035,099</td><td class="n">7,987</td><td class="n">52.95</td></tr>
+    <tr><td class="m">20250630</td><td class="n">3,051,471</td><td class="n">8,039</td><td class="n">59.81</td></tr>
+    <tr><td class="m">20250930</td><td class="n">3,062,511</td><td class="n">8,024</td><td class="n">66.34</td></tr>
+    <tr><td class="m">20251231</td><td class="n">3,211,271</td><td class="n">8,625</td><td class="n">67.33</td></tr>
+    <tr><td class="m">20260331</td><td class="n">3,239,273</td><td class="n">8,741</td><td class="n">65.67</td></tr>
+  </tbody>
+</table>
+</div>
+</details>
+
+<p>For scale-orientation, the ten largest filers of 2025Q1 (as-filed value; remember these are
+<em>filers</em> — three different umbrella styles among them, §4.4):</p>
+
+<div class="tw">
+<table>
+  <thead><tr><th class="m">cik</th><th>manager_name</th><th class="n">Σ value</th><th class="n">rows</th><th>report_type</th></tr></thead>
+  <tbody>
+    <tr><td class="m">102909</td><td>VANGUARD GROUP INC</td><td class="n">$5,531bn</td><td class="n">16,744</td><td>COMBINATION</td></tr>
+    <tr><td class="m">2012383</td><td>BlackRock, Inc.</td><td class="n">$4,761bn</td><td class="n">50,390</td><td>COMBINATION</td></tr>
+    <tr><td class="m">93751</td><td>STATE STREET CORP</td><td class="n">$2,427bn</td><td class="n">4,281</td><td>HOLDINGS</td></tr>
+    <tr><td class="m">315066</td><td>FMR LLC</td><td class="n">$1,566bn</td><td class="n">12,998</td><td>HOLDINGS</td></tr>
+    <tr><td class="m">895421</td><td>MORGAN STANLEY</td><td class="n">$1,399bn</td><td class="n">44,800</td><td>COMBINATION</td></tr>
+    <tr><td class="m">19617</td><td>JPMORGAN CHASE &amp; CO</td><td class="n">$1,369bn</td><td class="n">33,562</td><td>HOLDINGS</td></tr>
+    <tr><td class="m">1214717</td><td>GEODE CAPITAL MANAGEMENT, LLC</td><td class="n">$1,272bn</td><td class="n">8,518</td><td>HOLDINGS</td></tr>
+    <tr><td class="m">70858</td><td>BANK OF AMERICA CORP /DE/</td><td class="n">$1,238bn</td><td class="n">27,491</td><td>HOLDINGS</td></tr>
+    <tr><td class="m">73124</td><td>NORTHERN TRUST CORP</td><td class="n">$674bn</td><td class="n">21,514</td><td>COMBINATION</td></tr>
+    <tr><td class="m">886982</td><td>GOLDMAN SACHS GROUP INC</td><td class="n">$618bn</td><td class="n">12,510</td><td>HOLDINGS</td></tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ================================================================ -->
+<h2 id="s8"><span class="no">§8</span>Amendments and filing multiplicity</h2>
+
+<p>The builder already resolved amendments — per (period, CIK), the last original-or-RESTATEMENT
+filing replaces everything before it, then NEW&nbsp;HOLDINGS amendments (the mechanism for adding
+omitted positions, including expired confidential treatment) stack on top. What remains visible in
+the data, 2025Q1:</p>
+
+<div class="tw">
+<table>
+  <thead><tr><th class="m">is_amendment</th><th class="m">amendment_type</th><th class="n">rows</th><th class="n">filers</th><th>meaning</th></tr></thead>
+  <tbody>
+    <tr><td class="m">null</td><td class="m">null</td><td class="n">1,806,871</td><td class="n">4,015</td><td>original filing (field left blank)</td></tr>
+    <tr><td class="m">false</td><td class="m">null</td><td class="n">1,155,365</td><td class="n">3,874</td><td>original filing (field set to N)</td></tr>
+    <tr><td class="m">true</td><td class="m">RESTATEMENT</td><td class="n">65,541</td><td class="n">98</td><td>replaced that filer’s original entirely</td></tr>
+    <tr><td class="m">true</td><td class="m">NEW HOLDINGS</td><td class="n">7,322</td><td class="n">13</td><td>additive rows on top of the filer’s base filing</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>Two traps follow. <strong><code>is_amendment</code> is tri-state</strong>: 4,015 filers have it
+null, so <code>filter(~pl.col("is_amendment"))</code> silently drops 60% of the dataset — write
+<code>is_amendment.fill_null(False)</code> or filter on <code>amendment_type</code>.
+And <strong>a filer can span multiple accessions</strong> in one period (13 filers in 2025Q1,
+base + NEW&nbsp;HOLDINGS): “one filer, one filing” is almost always true, not always.
+<code>accession_number</code> is the real filing key; <code>(cik, cusip)</code> is not unique;
+<code>(accession_number, row)</code> is.</p>
+
+<footer>
+<p><strong>Sources.</strong> SEC <a href="https://www.sec.gov/data-research/sec-markets-data/form-13f-data-sets">Form 13F structured data sets</a> and the accompanying readme (SUBMISSION / COVERPAGE / INFOTABLE / OTHERMANAGER2 tables); Form 13F instructions (report types, column 5/7 semantics, the 2023 dollar-rounding change); this repo’s <code>save_form13f.py</code> and <code>README.md</code>.</p>
+<p><strong>Provenance.</strong> Every statistic above was computed directly from the local parquets on 2026-07-22 — cross-quarter facts from all 53 files, single-quarter facts from <code>20250331.parquet</code> unless another period is named. Re-derive them with polars one-liners in §4.6.</p>
+</footer>
+
+</main>
+</body>
+</html>
