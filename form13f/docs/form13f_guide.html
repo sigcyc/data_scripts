@@ -319,8 +319,8 @@ exists in the other direction, via the umbrella filer’s <code>other_manager*</
     <tr><td class="m">title_of_class</td><td>str</td><td>e.g. <code>COM</code>, <code>CL A</code>, <code>NOTE 0.500%</code></td></tr>
     <tr><td class="m">cusip</td><td>str</td><td>9 chars, uppercased; the join key for securities</td></tr>
     <tr><td class="m">figi</td><td>str</td><td>as reported; null before mid-2023</td></tr>
-    <tr><td class="m">deliverable_symbol</td><td>str</td><td>raw OpenFIGI ticker of the instrument itself; bond descriptors for debt (<code>BABA 0.5 06/01/31</code>)</td></tr>
-    <tr><td class="m">underlying_symbol</td><td>str</td><td>equity ticker of the underlier; = deliverable for equities, issuer symbol for Corp/Pfd, null for Govt/Muni/unmapped (§6)</td></tr>
+    <tr><td class="m">sym</td><td>str</td><td>raw OpenFIGI ticker of the instrument itself; bond descriptors for debt (<code>BABA 0.5 06/01/31</code>)</td></tr>
+    <tr><td class="m">sym_und</td><td>str</td><td>equity ticker of the underlier; = sym for equities, issuer symbol for Corp/Pfd, null for Govt/Muni/unmapped (§6)</td></tr>
     <tr class="group"><td colspan="3">Position</td></tr>
     <tr><td class="m">value</td><td>int</td><td>USD… <strong>but $1,000s before 2023</strong> — see §5 before summing anything across the break</td></tr>
     <tr><td class="m">shares</td><td>int</td><td>share count, or principal amount when <code>shares_type == "PRN"</code></td></tr>
@@ -621,6 +621,12 @@ linked = df.filter(
 )
 <span class="c"># Millennium 2025Q1: own filing $187.9bn + WorldQuant sleeve $15.9bn, 0 overlap</span></code></pre>
 
+<p>One security through one included manager — in cyc, <code>sym</code> plus an
+<code>other_manager_names</code> filter:</p>
+<pre><code>df.s('BABA', f=col('other_manager_names').str.contains('Jane Street Europe'))._A
+<span class="c"># BABA rows where Jane Street Europe is among the included managers — two hits all-time,
+# both in Jane Street Group's filing: 2021Q4 (10,809 sh) and 2026Q1 (16,567 sh)</span></code></pre>
+
 <p>A manager’s position in one security — sum the rows, keep options and principal out:</p>
 <pre><code>brk_aapl = df.filter(
     (pl.col("cik_i") == 1067983) &amp; (pl.col("cusip") == "037833100")
@@ -701,8 +707,8 @@ q = q.with_columns(value_usd=pl.when(pl.col("cik_i").is_in(kilo))
   <li><strong><code>figi</code></strong> is only populated from mid-2023 (SEC schema addition), and
     only when the filer supplied it.</li>
   <li><strong>Symbols are OpenFIGI-derived at build time, not as-of the period.</strong>
-    <code>deliverable_symbol</code> is the instrument’s own FIGI ticker (bond descriptors for
-    debt); <code>underlying_symbol</code> is the equity underlier — equal to the deliverable for
+    <code>sym</code> is the instrument’s own FIGI ticker (bond descriptors for
+    debt); <code>sym_und</code> is the equity underlier — equal to <code>sym</code> for
     equities, parsed from the descriptor for Corp/Pfd (<code>BABA 0.5 06/01/31</code> → BABA),
     null for Govt/Muni/Mtge and unmapped CUSIPs. Delisted/renamed securities may be null or carry
     today’s symbol, not the historical one.</li>

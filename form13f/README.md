@@ -60,8 +60,8 @@ several rows: different discretion, put/call, or sub-manager splits).
 | issuer_name / title_of_class | str | as reported |
 | cusip | str | 9 chars, uppercased |
 | figi | str | as reported (SEC added this column mid-2023; null before) |
-| deliverable_symbol | str | raw OpenFIGI ticker of the security itself: plain symbol for equities, full bond descriptor for debt (e.g. `BABA 0.5 06/01/31`); null if unmapped |
-| underlying_symbol | str | equity ticker of the underlier: = deliverable_symbol for equities; issuer symbol parsed from the FIGI bond ticker for Corp/Pfd (`BABA 0.5 06/01/31` → `BABA`); null for Govt/Muni/Mtge/unmapped |
+| sym | str | raw OpenFIGI ticker of the security itself: plain symbol for equities, full bond descriptor for debt (e.g. `BABA 0.5 06/01/31`); null if unmapped |
+| sym_und | str | equity ticker of the underlier: = sym for equities; issuer symbol parsed from the FIGI bond ticker for Corp/Pfd (`BABA 0.5 06/01/31` → `BABA`); null for Govt/Muni/Mtge/unmapped |
 | value | int | position value in USD. **Reported in 1000s of USD before the 2023-01 rule change** (i.e. periods up to 20220930, and a mix of conventions for 20221231) |
 | shares | int | SSHPRNAMT |
 | shares_type | str | `SH` shares / `PRN` principal amount |

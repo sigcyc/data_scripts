@@ -362,8 +362,8 @@ def build_period(period: date, data_dir: Path, force: bool, skip_tickers: bool, 
     )
 
     if skip_tickers:
-        df = df.with_columns(deliverable_symbol=pl.lit(None, dtype=pl.Utf8),
-                             underlying_symbol=pl.lit(None, dtype=pl.Utf8))
+        df = df.with_columns(sym=pl.lit(None, dtype=pl.Utf8),
+                             sym_und=pl.lit(None, dtype=pl.Utf8))
     else:
         by_value = (
             df.group_by("cusip").agg(pl.col("value").sum()).sort("value", descending=True)
@@ -372,19 +372,19 @@ def build_period(period: date, data_dir: Path, force: bool, skip_tickers: bool, 
         tick_df = pl.DataFrame(
             {"cusip": list(recs),
              "ticker": [r["ticker"] for r in recs.values()],
-             "deliverable_symbol": [r.get("figi_ticker") for r in recs.values()],
+             "sym": [r.get("figi_ticker") for r in recs.values()],
              "market_sector": [r.get("market_sector") for r in recs.values()]},
-            schema={"cusip": pl.Utf8, "ticker": pl.Utf8, "deliverable_symbol": pl.Utf8,
+            schema={"cusip": pl.Utf8, "ticker": pl.Utf8, "sym": pl.Utf8,
                     "market_sector": pl.Utf8},
         ).with_columns(
             # equities map to themselves; for corporate bonds and preferreds
             # the FIGI ticker starts with the issuer's equity symbol
             # ("BABA 0.5 06/01/31" -> BABA). Govt/Muni/Mtge have no equity
             # underlier, so they stay null.
-            underlying_symbol=pl.coalesce(
+            sym_und=pl.coalesce(
                 pl.col("ticker"),
                 pl.when(pl.col("market_sector").is_in(["Corp", "Pfd"]))
-                .then(pl.col("deliverable_symbol").str.extract(r"^([A-Z][A-Z0-9./]*)\s")),
+                .then(pl.col("sym").str.extract(r"^([A-Z][A-Z0-9./]*)\s")),
             )
         ).drop("ticker", "market_sector")
         df = df.join(tick_df, on="cusip", how="left")
@@ -404,8 +404,8 @@ def build_period(period: date, data_dir: Path, force: bool, skip_tickers: bool, 
         title_of_class=pl.col("TITLEOFCLASS"),
         cusip="cusip",
         figi="FIGI",
-        deliverable_symbol="deliverable_symbol",
-        underlying_symbol="underlying_symbol",
+        sym="sym",
+        sym_und="sym_und",
         value="value",
         shares="shares",
         shares_type=pl.col("SSHPRNAMTTYPE"),
@@ -425,8 +425,8 @@ def build_period(period: date, data_dir: Path, force: bool, skip_tickers: bool, 
     tmp.rename(out)
 
     n_mgr = df["cik"].n_unique()
-    cov_rows = df["underlying_symbol"].is_not_null().mean()
-    val = df.select((pl.col("value").filter(pl.col("underlying_symbol").is_not_null()).sum()
+    cov_rows = df["sym_und"].is_not_null().mean()
+    val = df.select((pl.col("value").filter(pl.col("sym_und").is_not_null()).sum()
                      / pl.col("value").sum()).alias("v"))["v"][0]
     print(f"{out.name}: {df.height:,} holdings, {n_mgr:,} managers, "
           f"symbol coverage {cov_rows:.1%} of rows / {(val or 0):.1%} of value", flush=True)
