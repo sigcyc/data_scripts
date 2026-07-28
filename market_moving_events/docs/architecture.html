@@ -1,0 +1,985 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>market_moving_events — architecture &amp; data sources</title>
+<style>
+  :root {
+    --bg: #ffffff;
+    --bg-soft: #f6f8fa;
+    --bg-code: #f0f2f5;
+    --fg: #1f2328;
+    --fg-soft: #57606a;
+    --border: #d8dee4;
+    --accent: #0969da;
+    --official-bg: #dafbe1; --official-fg: #116329; --official-bd: #aceebb;
+    --fred-bg: #ddf4ff;     --fred-fg: #0a558c;     --fred-bd: #a8d8f8;
+    --rule-bg: #fff8c5;     --rule-fg: #7d4e00;     --rule-bd: #f0dd86;
+    --warn-bg: #fff1e5;     --warn-bd: #f6b26b;
+    --note-bg: #ddf4ff;     --note-bd: #54aeff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1117;
+      --bg-soft: #161b22;
+      --bg-code: #1c2128;
+      --fg: #e6edf3;
+      --fg-soft: #9da7b1;
+      --border: #30363d;
+      --accent: #4493f8;
+      --official-bg: #12261e; --official-fg: #56d364; --official-bd: #1f4429;
+      --fred-bg: #0f2236;     --fred-fg: #6cb6ff;     --fred-bd: #15395b;
+      --rule-bg: #2a2410;     --rule-fg: #e3b341;     --rule-bd: #4a3c12;
+      --warn-bg: #2b1d12;     --warn-bd: #8a5a2b;
+      --note-bg: #0f2236;     --note-bd: #1f5a8e;
+    }
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font: 16px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    display: flex;
+  }
+  code, pre, .mono {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+  }
+  code {
+    background: var(--bg-code);
+    border-radius: 5px;
+    padding: .12em .35em;
+    font-size: .88em;
+  }
+  pre {
+    background: var(--bg-code);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+    overflow-x: auto;
+    font-size: .85em;
+    line-height: 1.5;
+  }
+  pre code { background: none; padding: 0; font-size: 1em; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* ---- layout: sticky TOC + main column ---- */
+  nav.toc {
+    position: sticky; top: 0;
+    height: 100vh;
+    flex: 0 0 250px;
+    overflow-y: auto;
+    padding: 28px 18px;
+    border-right: 1px solid var(--border);
+    background: var(--bg-soft);
+    font-size: .9em;
+  }
+  nav.toc .toc-title { font-weight: 700; margin-bottom: 10px; }
+  nav.toc ol { list-style: none; margin: 0; padding: 0; }
+  nav.toc li { margin: 0; }
+  nav.toc a {
+    display: block;
+    color: var(--fg-soft);
+    padding: 5px 8px;
+    border-radius: 6px;
+  }
+  nav.toc a:hover { background: var(--bg-code); color: var(--fg); text-decoration: none; }
+  nav.toc .num { color: var(--accent); font-weight: 600; margin-right: 6px; }
+  main {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: 980px;
+    padding: 36px 48px 120px;
+  }
+  @media (max-width: 900px) {
+    body { flex-direction: column; }
+    nav.toc { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+    main { padding: 24px 18px 80px; }
+  }
+
+  header.page h1 { margin: 0 0 6px; font-size: 1.9em; }
+  header.page .subtitle { color: var(--fg-soft); margin-bottom: 14px; }
+  .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+  .chip {
+    background: var(--bg-soft);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 3px 12px;
+    font-size: .8em;
+    color: var(--fg-soft);
+  }
+  .chip b { color: var(--fg); font-weight: 600; }
+
+  section { margin-top: 44px; }
+  h2 {
+    font-size: 1.45em;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+    margin: 0 0 16px;
+    scroll-margin-top: 16px;
+  }
+  h2 .num, h3 .num { color: var(--accent); margin-right: 10px; }
+  h3 { font-size: 1.1em; margin: 26px 0 10px; scroll-margin-top: 16px; }
+
+  /* ---- tables ---- */
+  .tbl-wrap { overflow-x: auto; margin: 14px 0; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: .88em;
+  }
+  th, td {
+    border: 1px solid var(--border);
+    padding: 8px 12px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th { background: var(--bg-soft); font-weight: 600; white-space: nowrap; }
+  tbody tr:nth-child(even) { background: color-mix(in srgb, var(--bg-soft) 55%, var(--bg)); }
+  td.nowrap, th.nowrap { white-space: nowrap; }
+
+  /* ---- badges ---- */
+  .badge {
+    display: inline-block;
+    border-radius: 999px;
+    padding: 1px 10px;
+    font-size: .78em;
+    font-weight: 600;
+    white-space: nowrap;
+    border: 1px solid;
+  }
+  .b-official { background: var(--official-bg); color: var(--official-fg); border-color: var(--official-bd); }
+  .b-fred     { background: var(--fred-bg);     color: var(--fred-fg);     border-color: var(--fred-bd); }
+  .b-rule     { background: var(--rule-bg);     color: var(--rule-fg);     border-color: var(--rule-bd); }
+
+  /* ---- asides ---- */
+  .note, .warn {
+    border-left: 4px solid var(--note-bd);
+    background: var(--note-bg);
+    border-radius: 0 8px 8px 0;
+    padding: 10px 16px;
+    margin: 16px 0;
+    font-size: .92em;
+  }
+  .warn { border-left-color: var(--warn-bd); background: var(--warn-bg); }
+  .note b:first-child, .warn b:first-child { display: block; margin-bottom: 2px; }
+
+  /* ---- data-flow diagram ---- */
+  .flow { margin: 18px 0; font-size: .88em; }
+  .fbox {
+    border: 1px solid var(--border);
+    background: var(--bg-soft);
+    border-radius: 8px;
+    padding: 10px 16px;
+    text-align: center;
+    margin: 0 auto;
+    max-width: 640px;
+  }
+  .fbox .t { font-weight: 600; }
+  .fbox .d { color: var(--fg-soft); font-size: .9em; }
+  .farrow { text-align: center; color: var(--fg-soft); line-height: 1.7; }
+  .fsplit { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; max-width: 860px; margin: 0 auto; }
+  .fgroup {
+    border: 1px dashed var(--border);
+    border-radius: 10px;
+    padding: 12px;
+  }
+  .fgroup > .gt { font-weight: 600; text-align: center; margin-bottom: 10px; }
+  .fgroup .gt code { font-size: .95em; }
+  .pill {
+    display: block;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    border-radius: 7px;
+    padding: 6px 10px;
+    margin: 6px 0;
+  }
+  .pill .src { float: right; color: var(--fg-soft); font-size: .85em; }
+  @media (max-width: 700px) { .fsplit { grid-template-columns: 1fr; } }
+
+  /* ---- tier cards ---- */
+  .cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 16px 0; }
+  @media (max-width: 800px) { .cards { grid-template-columns: 1fr; } }
+  .card {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    background: var(--bg-soft);
+    font-size: .9em;
+  }
+  .card h4 { margin: 0 0 8px; }
+  .card p { margin: 6px 0; }
+
+  ul, ol { padding-left: 24px; }
+  li { margin: 4px 0; }
+  .small { font-size: .88em; color: var(--fg-soft); }
+  .kbd-list code { white-space: nowrap; }
+</style>
+</head>
+<body>
+
+<nav class="toc">
+  <div class="toc-title">market_moving_events</div>
+  <ol>
+    <li><a href="#dataset"><span class="num">1</span>Dataset &amp; schema</a></li>
+    <li><a href="#savedata"><span class="num">2</span>save_data integration</a></li>
+    <li><a href="#codemap"><span class="num">3</span>Code map</a></li>
+    <li><a href="#catalog"><span class="num">4</span>Event catalog</a></li>
+    <li><a href="#tiers"><span class="num">5</span>Date-source tiers</a></li>
+    <li><a href="#endpoints"><span class="num">6</span>External endpoints</a></li>
+    <li><a href="#summaries"><span class="num">7</span>Summaries</a></li>
+    <li><a href="#caching"><span class="num">8</span>Caching &amp; failure</a></li>
+    <li><a href="#operations"><span class="num">9</span>Operations</a></li>
+    <li><a href="#extending"><span class="num">10</span>Adding an event type</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<header class="page">
+  <h1>market_moving_events — architecture &amp; data sources</h1>
+  <div class="subtitle">
+    Implementation notes for the scheduled market-moving-events dataset.
+    Requirements: <code>docs/idea.md</code> · quick reference: <code>README.md</code> ·
+    code: <code>scripts/save_market_moving_events.py</code> + <code>scripts/market_moving_events/</code>
+  </div>
+  <div class="meta">
+    <span class="chip">df_type <b>market_moving_events</b></span>
+    <span class="chip">output <b>/Volumes/ssd/market_moving_events/YYYYMMDD.parquet</b></span>
+    <span class="chip">calendar <b>all_days</b></span>
+    <span class="chip">runner <b>save_data skill</b></span>
+  </div>
+</header>
+
+<!-- ================================================================ -->
+<section id="dataset">
+<h2><span class="num">1</span>What the dataset is</h2>
+
+<p>One parquet per <b>calendar day</b>. Each row is one <i>scheduled</i>
+market-moving event occurring on that date — releases and index actions known
+ahead of time, never breaking news. The script is forward-runnable: for future
+dates it emits the expected schedule; re-running a past date fills in what
+actually happened.</p>
+
+<div class="tbl-wrap">
+<table>
+  <thead><tr><th>column</th><th>type</th><th>meaning</th></tr></thead>
+  <tbody>
+    <tr><td class="nowrap"><code>time</code></td><td class="nowrap"><code>Datetime(ns, America/New_York)</code></td>
+        <td>event time (release time, or 16:00 close for rebalance-effective events)</td></tr>
+    <tr><td class="nowrap"><code>sym</code></td><td><code>String</code></td>
+        <td>stable event code, e.g. <code>CPI</code>, <code>FOMC</code>, <code>SPY_REBAL_EFFECTIVE</code></td></tr>
+    <tr><td class="nowrap"><code>event_name</code></td><td><code>String</code></td>
+        <td>human-readable description, includes the scheduled clock time</td></tr>
+    <tr><td class="nowrap"><code>release_for</code></td><td><code>String?</code></td>
+        <td>reference period of a release (<code>May 2026</code>, <code>Q1 2026</code>, claims week-ending date); null for index/FOMC events</td></tr>
+    <tr><td class="nowrap"><code>event_date_type</code></td><td><code>String</code></td>
+        <td><code>actual</code> if <code>time &lt;= now</code> when the row was built, else <code>expected</code></td></tr>
+    <tr><td class="nowrap"><code>summarize</code></td><td><code>String?</code></td>
+        <td>what happened — only filled for <code>actual</code> rows</td></tr>
+    <tr><td class="nowrap"><code>schedule_source</code></td><td><code>String</code></td>
+        <td>how the <i>date</i> was determined:
+            <span class="badge b-official">official</span>
+            <span class="badge b-fred">fred</span>
+            <span class="badge b-rule">rule</span> (<a href="#tiers">§5</a>)</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>Days with no events still get a file: an empty frame with the full schema,
+so multi-day scans concat cleanly.</p>
+
+<div class="note">
+<b>Semantics to be aware of</b>
+<ul>
+  <li><b><code>actual</code> vs <code>expected</code> is a snapshot at build time</b>,
+      decided per event by comparing the event's timestamp to the wall clock (ET).
+      A file written at 07:00 for that same day says <code>expected</code>;
+      rewriting it after the close flips rows to <code>actual</code> and fills
+      <code>summarize</code>. The daily job should therefore run for a window like
+      <code>[today−3, today+N]</code> so recent files get upgraded.</li>
+  <li>Re-runs are idempotent overwrites of the date's parquet.</li>
+  <li>Multiple events can share a timestamp (third Friday 16:00 holds
+      <code>SPY_REBAL_EFFECTIVE</code> + <code>TRIPLE_WITCHING</code>, plus
+      <code>QQQ_RECON_EFFECTIVE</code> in December); <code>sym</code> disambiguates.</li>
+</ul>
+</div>
+</section>
+
+<!-- ================================================================ -->
+<section id="savedata">
+<h2><span class="num">2</span>save_data interface integration</h2>
+
+<p>The script follows the <code>save_data</code> skill contract so the batch
+runner can drive it:</p>
+
+<pre><code>python scripts/save_market_moving_events.py --date YYYYMMDD --write [--data-dir BASE]</code></pre>
+
+<ul>
+  <li>File name <code>save_market_moving_events.py</code> ⇒ df_type <code>market_moving_events</code>
+      (the runner strips the <code>save_</code> prefix).</li>
+  <li>Without <code>--write</code> it prints the frame and stops (interactive/debug use).</li>
+  <li><code>--data-dir BASE</code> writes to <code>BASE/market_moving_events/</code> instead of the registered path.</li>
+  <li>Exit code is the failure signal for the runner. Network problems never cause
+      a nonzero exit (<a href="#caching">§8</a>); only real bugs / write errors do.</li>
+</ul>
+
+<p>Registration in <code>cyc/cyc/files/df_types.yaml</code>:</p>
+
+<pre><code>market_moving_events:
+  cols:
+    core: [sym, time]
+  sym: sym
+  time: time
+  calendar: all_days</code></pre>
+
+<div class="note">
+<b>Why <code>calendar: all_days</code> (= every calendar day)</b>
+With the default <code>nyse</code> calendar the runner would skip non-trading
+days, silently dropping events that fall on them — the Employment Situation has
+been released on Good Friday (market holiday), and MSCI announcements land at
+~23:00 CET regardless of US sessions. Cost: ~365 small files per year, most empty.
+</div>
+</section>
+
+<!-- ================================================================ -->
+<section id="codemap">
+<h2><span class="num">3</span>Code map</h2>
+
+<div class="tbl-wrap">
+<table>
+  <thead><tr><th>file</th><th>responsibility</th></tr></thead>
+  <tbody>
+    <tr><td class="nowrap"><code>scripts/save_market_moving_events.py</code></td><td>entrypoint: CLI args, output path, write</td></tr>
+    <tr><td class="nowrap"><code>market_moving_events/__init__.py</code></td><td><code>build_events_df(date)</code> — orchestration + schema</td></tr>
+    <tr><td class="nowrap"><code>market_moving_events/base.py</code></td><td><code>Event</code> dataclass, ET timezone, NYSE-session calendar math</td></tr>
+    <tr><td class="nowrap"><code>market_moving_events/schedules.py</code></td><td>one generator per event family → <code>list[Event]</code> for a date</td></tr>
+    <tr><td class="nowrap"><code>market_moving_events/summaries.py</code></td><td>data-driven summaries for events that already happened</td></tr>
+    <tr><td class="nowrap"><code>market_moving_events/http_cache.py</code></td><td>disk-cached HTTP with flock, TTL, stale-on-error</td></tr>
+  </tbody>
+</table>
+</div>
+
+<h3>Data flow for one date</h3>
+
+<div class="flow">
+  <div class="fbox"><span class="t"><code>save_market_moving_events.py</code> · <code>main(date)</code></span>
+    <div class="d">parse args; <code>--write</code> → parquet, else print</div></div>
+  <div class="farrow">↓</div>
+  <div class="fbox"><span class="t"><code>build_events_df(date)</code></span>
+    <div class="d">collect events → sort by (time, sym) → <code>event_date_type = time &lt;= now</code> → summarize past rows</div></div>
+  <div class="farrow">↓</div>
+  <div class="fsplit">
+    <div class="fgroup">
+      <div class="gt"><code>schedules.events_for(d)</code></div>
+      <span class="pill"><code>fomc_events</code><span class="src">embedded Fed calendar + Jackson Hole</span></span>
+      <span class="pill"><code>intl_cb_events</code><span class="src">embedded ECB / BOJ calendars</span></span>
+      <span class="pill"><code>index_events</code><span class="src">pure calendar rules</span></span>
+      <span class="pill"><code>flow_events</code><span class="src">OPEX / VIX / quarter-end / elections</span></span>
+      <span class="pill"><code>bls_release_events</code><span class="src">FRED dates or rules</span></span>
+      <span class="pill"><code>bea_release_events</code><span class="src">FRED dates or rules</span></span>
+      <span class="pill"><code>other_macro_events</code><span class="src">retail / ADP / UMich / durables / ECI / CB</span></span>
+      <span class="pill"><code>recurring_events</code><span class="src">claims / ISM rules</span></span>
+      <span class="pill"><code>treasury_events</code><span class="src">QRA table + TreasuryDirect API</span></span>
+    </div>
+    <div class="fgroup">
+      <div class="gt"><code>summaries.summarize(ev)</code> <span class="small">(past events only)</span></div>
+      <span class="pill"><code>_bls_data</code><span class="src">api.bls.gov v1, keyless</span></span>
+      <span class="pill"><code>_fred_series</code><span class="src">fredgraph.csv, keyless</span></span>
+      <span class="pill"><code>_auction</code><span class="src">TreasuryDirect results (in <code>Event.ref</code>)</span></span>
+      <span class="pill">fallback<span class="src">descriptive <code>summary_fallback</code></span></span>
+    </div>
+  </div>
+</div>
+
+<h3>Key pieces</h3>
+<ul>
+  <li><b><code>base.Event</code></b> — internal record produced by generators:
+      <code>dt</code> (aware ET datetime), <code>sym</code>, <code>name</code>,
+      <code>release_for</code>, <code>schedule_source</code>,
+      <code>summary_fallback</code> (descriptive text used when no data summary is
+      possible), and <code>ref</code> (a dict of context the summarizer needs,
+      e.g. the reference month <code>{"year": 2026, "month": 5}</code> or the FOMC
+      <code>day2</code>).</li>
+  <li><b><code>base</code> calendar helpers</b> — built on
+      <code>exchange_calendars</code> XNYS with an explicitly extended horizon
+      (today + 3 years; the library's default end is too short for forward runs):
+      <code>is_session</code>, <code>prev_session</code>/<code>next_session</code>
+      (walk to the nearest session), <code>nth_weekday</code>,
+      <code>last_weekday</code>, <code>nth_bday</code>, <code>last_bday</code>.
+      All "shift off a holiday" logic uses NYSE sessions as the proxy for business
+      days. Known imperfection: NYSE trades on federal holidays like Veterans Day
+      and Columbus Day, so federal-agency closures need special-casing where they
+      matter (done for claims, <a href="#catalog">§4</a>).</li>
+  <li><b>Generators are date-filtered</b>: each computes "does my event land
+      exactly on <code>d</code>?" and returns <code>[]</code> otherwise, so a
+      single day's build never scans ranges.</li>
+</ul>
+</section>
+
+<!-- ================================================================ -->
+<section id="catalog">
+<h2><span class="num">4</span>Event catalog and scheduling logic</h2>
+
+<p>Times are ET. <i>Holiday-shifted</i> = moved to the previous NYSE session via
+<code>prev_session</code>.</p>
+
+<h3>Macro releases</h3>
+<div class="tbl-wrap">
+<table>
+  <thead><tr><th>sym</th><th>release</th><th class="nowrap">time</th><th>date logic</th></tr></thead>
+  <tbody>
+    <tr>
+      <td class="nowrap"><code>CPI</code> <span class="badge b-fred">fred</span><span class="badge b-rule">rule</span></td>
+      <td>Consumer Price Index (BLS), for the prior month</td><td>08:30</td>
+      <td>FRED release id 10; fallback rule: first session on/after the <b>10th</b>
+          (real dates cluster 10th–15th; rule is ±1–3 days)</td>
+    </tr>
+    <tr>
+      <td class="nowrap"><code>PPI</code> <span class="badge b-fred">fred</span><span class="badge b-rule">rule</span></td>
+      <td>Producer Price Index, final demand (BLS)</td><td>08:30</td>
+      <td>FRED id 46; fallback: first session after the CPI rule date (PPI is adjacent to CPI in practice)</td>
+    </tr>
+    <tr>
+      <td class="nowrap"><code>NFP</code> <span class="badge b-fred">fred</span><span class="badge b-rule">rule</span></td>
+      <td>Employment Situation (BLS)</td><td>08:30</td>
+      <td>FRED id 50; fallback: <b>third Friday after the reference week</b> (the week
+          containing the 12th of the reference month) — this is BLS's own scheduling
+          convention and matches the published calendar almost always; the
+          year-opening report slips +7 days when it would land Jan 1–5;
+          holiday-shifted (e.g. July 4th week)</td>
+    </tr>
+    <tr>
+      <td class="nowrap"><code>JOBLESS_CLAIMS</code> <span class="badge b-rule">rule</span></td>
+      <td>DOL weekly initial claims, for the week ended the prior Saturday</td><td>08:30</td>
+      <td>rule only: every Thursday that is a session; Wednesday when Thursday is a
+          market holiday (Thanksgiving, Jan 1) <b>or Veterans Day Nov 11</b>
+          (NYSE trades but DOL is closed)</td>
+    </tr>
+    <tr>
+      <td class="nowrap"><code>GDP</code> <span class="badge b-fred">fred</span><span class="badge b-rule">rule</span></td>
+      <td>BEA GDP estimate; monthly cycle advance → second → third per quarter</td><td>08:30</td>
+      <td>FRED id 53; fallback: last Thursday of the month (December: session
+          on/before Dec 23 — BEA pulls year-end releases forward)</td>
+    </tr>
+    <tr>
+      <td class="nowrap"><code>PCE</code> <span class="badge b-fred">fred</span><span class="badge b-rule">rule</span></td>
+      <td>BEA personal income &amp; outlays (PCE price index), for the prior month</td><td>08:30</td>
+      <td>FRED id 54; fallback: last Friday of the month (December: session on/before Dec 22)</td>
+    </tr>
+    <tr>
+      <td class="nowrap"><code>RETAIL_SALES</code> <span class="badge b-fred">fred</span><span class="badge b-rule">rule</span></td>
+      <td>Census advance retail sales (MARTS), prior month</td><td>08:30</td>
+      <td>FRED id 9; fallback: first session on/after the <b>15th</b> (real dates cluster 15th–17th)</td>
+    </tr>
+    <tr>
+      <td class="nowrap"><code>ADP</code> <span class="badge b-rule">rule</span></td>
+      <td>ADP private employment, prior month</td><td>08:15</td>
+      <td>the Wednesday before the Employment Situation (using the FRED or rule NFP date), holiday-shifted</td>
+    </tr>
+    <tr>
+      <td class="nowrap"><code>DURABLE_GOODS</code> <span class="badge b-rule">rule</span></td>
+      <td>Census durable goods orders (advance), prior month</td><td>08:30</td>
+      <td>first session on/after the <b>25th</b> (real dates cluster 25th–27th)</td>
+    </tr>
+    <tr>
+      <td class="nowrap"><code>ECI</code> <span class="badge b-rule">rule</span></td>
+      <td>Employment Cost Index (quarterly wage inflation; Fed-watched)</td><td>08:30</td>
+      <td>last business day of Jan/Apr/Jul/Oct (matches recent years exactly)</td>
+    </tr>
+    <tr>
+      <td class="nowrap"><code>JOLTS</code> <span class="badge b-fred">fred</span></td>
+      <td>BLS job openings, for the month two back</td><td>10:00</td>
+      <td>FRED id 192 <b>only</b> — no fallback rule is emitted because none is reliable enough</td>
+    </tr>
+    <tr>
+      <td class="nowrap"><code>ISM_MFG</code> <span class="badge b-rule">rule</span></td>
+      <td>ISM Manufacturing PMI, prior month</td><td>10:00</td>
+      <td>rule only: 1st business day of the month (this <i>is</i> ISM's schedule)</td>
+    </tr>
+    <tr>
+      <td class="nowrap"><code>ISM_SVC</code> <span class="badge b-rule">rule</span></td>
+      <td>ISM Services PMI, prior month</td><td>10:00</td>
+      <td>rule only: 3rd business day of the month</td>
+    </tr>
+    <tr>
+      <td class="nowrap"><code>UMICH_PRELIM</code> / <code>UMICH_FINAL</code> <span class="badge b-rule">rule</span></td>
+      <td>U. Michigan consumer sentiment + inflation expectations (current month)</td><td>10:00</td>
+      <td>preliminary ~2nd Friday, final ~last Friday (UMich convention; occasionally shifts a week)</td>
+    </tr>
+    <tr>
+      <td class="nowrap"><code>CB_CONFIDENCE</code> <span class="badge b-rule">rule</span></td>
+      <td>Conference Board consumer confidence (current month)</td><td>10:00</td>
+      <td>last Tuesday of the month (the Conference Board's stated schedule)</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<p class="small"><b><code>release_for</code> derivation</b>: CPI/PPI/NFP/PCE =
+previous month; JOLTS = two months back; GDP = previous quarter, with the
+estimate label cycling by month within the quarter (Jan releases Q4-advance,
+Feb Q4-second, Mar Q4-third, Apr Q1-advance, …); claims = week-ending Saturday
+(release Thursday − 5 days).</p>
+
+<h3>Central banks, fiscal &amp; Treasury supply</h3>
+<div class="tbl-wrap">
+<table>
+  <thead><tr><th>sym</th><th class="nowrap">time</th><th>date logic</th></tr></thead>
+  <tbody>
+    <tr>
+      <td class="nowrap"><code>FOMC</code> <span class="badge b-official">official</span></td>
+      <td>14:00</td>
+      <td>statement 14:00, press conference 14:30. Embedded <code>FOMC_MEETINGS</code>
+          table in <code>schedules.py</code> — the Fed's published calendar for
+          <b>2024–2026</b>, all 8 meetings/year, event emitted on day 2; quarterly
+          (Mar/Jun/Sep/Dec) meetings are annotated "includes Summary of Economic
+          Projections (dot plot)". A stderr warning fires for dates in years outside
+          <code>FOMC_YEARS</code>; extend the table when the Fed publishes the next year</td>
+    </tr>
+    <tr>
+      <td class="nowrap"><code>FOMC_MINUTES</code> <span class="badge b-rule">rule</span></td>
+      <td>14:00</td>
+      <td>day 2 + exactly 21 days (the Fed's "three weeks after" practice), holiday-shifted backwards</td>
+    </tr>
+    <tr>
+      <td class="nowrap"><code>ECB</code> <span class="badge b-official">official</span></td>
+      <td>08:15</td>
+      <td>statement 14:15 CET = 08:15 ET, press conference 08:45 ET. Embedded
+          <code>ECB_DECISIONS</code> (8 decisions/year, <b>2025–2026</b> from the
+          ECB's published calendar)</td>
+    </tr>
+    <tr>
+      <td class="nowrap"><code>BOJ</code> <span class="badge b-official">official</span></td>
+      <td>~23:00</td>
+      <td>the decision lands around midday JST on the meeting's second day =
+          ~23:00–01:30 ET the <i>prior US evening</i>, so the event is emitted on
+          the prior ET date at 23:00 (time approximate by nature — the BOJ has no
+          fixed announcement time). Embedded <code>BOJ_DECISIONS_JST</code>
+          (<b>2025–2026</b> from the BOJ's published calendar)</td>
+    </tr>
+    <tr>
+      <td class="nowrap"><code>JACKSON_HOLE</code> <span class="badge b-rule">rule</span></td>
+      <td>10:00</td>
+      <td>Fed Chair keynote, Friday morning of the KC Fed symposium — the 4th Friday
+          of August (matches 2024, 2025 and 2026: Aug 27–29); exact speech time is
+          published only days ahead</td>
+    </tr>
+    <tr>
+      <td class="nowrap"><code>QRA</code> <span class="badge b-official">official</span></td>
+      <td>08:30</td>
+      <td>Treasury quarterly refunding statement (coupon auction sizes). Dates float
+          around the Feb/May/Aug/Nov turn (Jan 28–Feb 5 etc.) — too irregular for a
+          rule, so confirmed dates are embedded in <code>QRA_DATES</code>
+          (<b>2025 – Aug 2026</b>); each statement names the next date</td>
+    </tr>
+    <tr>
+      <td class="nowrap"><code>AUCTION_2Y…30Y</code> <span class="badge b-official">official</span></td>
+      <td>13:00</td>
+      <td>Treasury coupon auctions (2/3/5/7/10/20/30-year notes &amp; bonds, incl.
+          reopenings; bills/TIPS/FRN excluded). Dates from the keyless TreasuryDirect
+          API: all currently <i>announced</i> auctions (~1–2 weeks forward) plus ~2
+          years of history. Beyond the announcement window no auction rows exist —
+          the daily sliding-window re-run keeps them filled. Results close 13:00,
+          posted ~13:02</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h3>Index events</h3>
+<div class="tbl-wrap">
+<table>
+  <thead><tr><th>sym</th><th class="nowrap">time</th><th>date logic</th></tr></thead>
+  <tbody>
+    <tr>
+      <td class="nowrap"><code>SPY_REBAL_ANNOUNCE</code> <span class="badge b-rule">rule</span></td>
+      <td>17:15</td>
+      <td>first Friday of Mar/Jun/Sep/Dec — S&amp;P DJI's usual quarterly-rebalance
+          press-release evening. Convention, not a published guarantee</td>
+    </tr>
+    <tr>
+      <td class="nowrap"><code>SPY_REBAL_EFFECTIVE</code> <span class="badge b-official">official</span></td>
+      <td>16:00</td>
+      <td>third Friday of Mar/Jun/Sep/Dec, holiday-shifted (June 2026 → Thu June 18,
+          Juneteenth). Changes are formally effective before the next open; tracking
+          funds trade at this close. Methodology-fixed</td>
+    </tr>
+    <tr>
+      <td class="nowrap"><code>TRIPLE_WITCHING</code> <span class="badge b-official">official</span></td>
+      <td>16:00</td>
+      <td>same day as <code>SPY_REBAL_EFFECTIVE</code> (quarterly expiration of
+          index futures/options + stock options)</td>
+    </tr>
+    <tr>
+      <td class="nowrap"><code>QQQ_RECON_ANNOUNCE</code> <span class="badge b-rule">rule</span></td>
+      <td>20:00</td>
+      <td>second Friday of December — Nasdaq's annual reconstitution press release</td>
+    </tr>
+    <tr>
+      <td class="nowrap"><code>QQQ_RECON_EFFECTIVE</code> <span class="badge b-official">official</span></td>
+      <td>16:00</td>
+      <td>third Friday of December, holiday-shifted; effective at the following
+          open, funds trade at this close</td>
+    </tr>
+    <tr>
+      <td class="nowrap"><code>MSCI_REVIEW_ANNOUNCE</code> <span class="badge b-rule">rule</span></td>
+      <td>17:00</td>
+      <td>≈23:00 CET, second Tuesday of Feb/May/Aug/Nov — matches recent MSCI review
+          announcements but MSCI only commits to "≥ 9 business days before effective";
+          treat as ±a few days</td>
+    </tr>
+    <tr>
+      <td class="nowrap"><code>MSCI_REVIEW_EFFECTIVE</code> <span class="badge b-official">official</span></td>
+      <td>16:00</td>
+      <td>last business day of Feb/May/Aug/Nov (changes effective as of that close)</td>
+    </tr>
+    <tr>
+      <td class="nowrap"><code>RUSSELL_PRELIM</code> <span class="badge b-rule">rule</span></td>
+      <td>18:00</td>
+      <td>preliminary add/delete lists posted after 18:00 ET five Fridays before the
+          June reconstitution (May 22 2026, May 23 2025) — the first tradeable look
+          at the changes</td>
+    </tr>
+    <tr>
+      <td class="nowrap"><code>RUSSELL_RECON</code> <span class="badge b-official">official</span></td>
+      <td>16:00</td>
+      <td>semi-annual since 2026: <b>June</b> = fourth Friday (holiday-shifted;
+          historically the largest closing auction of the year), <b>December</b> =
+          second Friday starting Dec 11 2026 (per the FTSE Russell schedule update
+          of Nov 2025 — originally announced for November, then moved)</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h3>Flows, expirations &amp; elections</h3>
+<div class="tbl-wrap">
+<table>
+  <thead><tr><th>sym</th><th class="nowrap">time</th><th>date logic</th></tr></thead>
+  <tbody>
+    <tr>
+      <td class="nowrap"><code>OPEX</code> <span class="badge b-official">official</span></td>
+      <td>16:00</td>
+      <td>monthly options expiration: third Friday (holiday-shifted) of the eight
+          non-quad months; quad months are covered by <code>TRIPLE_WITCHING</code></td>
+    </tr>
+    <tr>
+      <td class="nowrap"><code>VIX_EXP</code> <span class="badge b-official">official</span></td>
+      <td>09:30</td>
+      <td>VIX futures/options settlement: 30 days before the <i>next</i> month's
+          standard SPX expiration (third Friday, holiday-adjusted), stepped to the
+          prior session if needed — usually a Wednesday; the SOQ settlement prints
+          off SPX opening rotations</td>
+    </tr>
+    <tr>
+      <td class="nowrap"><code>QUARTER_END</code> <span class="badge b-official">official</span></td>
+      <td>16:00</td>
+      <td>last session of Mar/Jun/Sep/Dec — pension / target-date rebalance flows
+          and window dressing into the close</td>
+    </tr>
+    <tr>
+      <td class="nowrap"><code>US_ELECTION</code> <span class="badge b-official">official</span></td>
+      <td>20:00</td>
+      <td>even years, the Tuesday after the first Monday of November (statutory);
+          labeled presidential (year % 4 == 0) or midterm; timestamped at first
+          poll closings, results drive the overnight session</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="warn">
+<b>Not implemented (documented gaps)</b>
+Nasdaq-100 <i>quarterly</i> share/weight adjustments (Mar/Jun/Sep third Fridays);
+special/ad-hoc index changes (by definition not known ahead of time); mega-cap
+<b>earnings dates</b> (no reliable keyless calendar — company IR announcements);
+Fed Chair congressional testimony (dates set only ~1–2 weeks ahead); S&amp;P Global
+flash PMIs, Empire/Philly Fed, housing data (second-tier); OPEC+ meetings and EIA
+inventories (commodity-first); Fed bank stress-test results (date announced ad hoc
+in late June).
+</div>
+</section>
+
+<!-- ================================================================ -->
+<section id="tiers">
+<h2><span class="num">5</span>Date sources: the three tiers</h2>
+
+<p>Every row carries <code>schedule_source</code> so consumers can filter by confidence.</p>
+
+<div class="cards">
+  <div class="card">
+    <h4><span class="badge b-official">official</span></h4>
+    <p>Embedded calendars published far ahead (FOMC, ECB, BOJ, refunding
+       statements), methodology-fixed index/expiration dates, and
+       TreasuryDirect-announced auctions.</p>
+    <p><b>Exact; no network needed except auctions.</b></p>
+  </div>
+  <div class="card">
+    <h4><span class="badge b-fred">fred</span></h4>
+    <p>Exact release dates from the FRED API <code>release/dates</code> endpoint,
+       covering <i>past and future scheduled</i> dates for the BLS/BEA releases.
+       Active only when a key is configured (free, instant:
+       <a href="https://fred.stlouisfed.org/docs/api/api_key.html">fred.stlouisfed.org/docs/api/api_key</a>)
+       via <code>$FRED_API_KEY</code> or <code>config/fred_api_key.txt</code> (gitignored).</p>
+    <p>Requests use <code>include_release_dates_with_no_data=true</code> (required
+       to get future dates) over a <code>[year−1, year+1]</code> realtime window,
+       cached 24&nbsp;h per (release, year).</p>
+    <p><b>When the FRED schedule is available it replaces the rule entirely</b> —
+       a date not on the FRED schedule emits nothing, so schedule changes
+       (e.g. shutdown delays) propagate instead of double-printing.</p>
+  </div>
+  <div class="card">
+    <h4><span class="badge b-rule">rule</span></h4>
+    <p>The calendar approximations in <a href="#catalog">§4</a>, used only when
+       FRED is unavailable. Exactness varies: claims/ISM/NFP rules are near-exact;
+       CPI/PPI/GDP/PCE rules are usually within a couple of days; announcement
+       conventions are looser.</p>
+    <p><b>Rules cannot know about ad-hoc schedule changes</b> — e.g. the late-2025
+       government shutdown delayed CPI well past any rule date.</p>
+  </div>
+</div>
+</section>
+
+<!-- ================================================================ -->
+<section id="endpoints">
+<h2><span class="num">6</span>External endpoints</h2>
+
+<div class="tbl-wrap">
+<table>
+  <thead><tr><th>endpoint</th><th>used for</th><th class="nowrap">auth</th><th>notes</th></tr></thead>
+  <tbody>
+    <tr>
+      <td class="nowrap"><code>api.stlouisfed.org/<br>fred/release/dates</code></td>
+      <td>exact release schedules (tier <span class="badge b-fred">fred</span>)</td>
+      <td class="nowrap">FRED key</td>
+      <td>optional. Release ids: CPI 10, PPI 46, Employment Situation 50, GDP 53,
+          Personal Income &amp; Outlays 54, JOLTS 192, retail sales 9. Each id's
+          release <i>name</i> is verified once against expectations
+          (<code>/fred/release</code>) so a wrong id can never silently emit dates</td>
+    </tr>
+    <tr>
+      <td class="nowrap"><code>treasurydirect.gov/TA_WS/<br>securities/announced<br>+ /auctioned</code></td>
+      <td>auction schedule (forward) and results (high yield, bid-to-cover)</td>
+      <td class="nowrap">none</td>
+      <td>keyless JSON. <code>announced</code> = currently announced auctions
+          (~1–2 weeks forward); <code>auctioned?days=750&amp;type=Note|Bond</code> =
+          ~2 years of completed auctions with results. Filtered to coupon
+          (Note/Bond) original terms 2/3/5/7/10/20/30-year; announced+auctioned
+          overlap deduped by (date, cusip) with results taking precedence.
+          Cached 2 h so same-day results appear promptly</td>
+    </tr>
+    <tr>
+      <td class="nowrap"><code>api.bls.gov/publicAPI/<br>v1/timeseries/data/</code> (POST)</td>
+      <td>CPI/PPI/payrolls actuals for <code>summarize</code></td>
+      <td class="nowrap">none</td>
+      <td>v1 limits: 25 req/day/IP, 25 series/query, 10-year span. We batch all 7
+          series in one request per <code>(start_year, end_year)</code> pair, cached
+          6&nbsp;h, so a full backfill costs ~1 request per year-pair. Payload
+          <code>status != REQUEST_SUCCEEDED</code> (e.g. rate-limited) raises
+          <i>inside</i> the fetch so error bodies are never cached. Series values
+          can be placeholders (<code>"-"</code>) — skipped. Period <code>M13</code>
+          (annual average) — skipped</td>
+    </tr>
+    <tr>
+      <td class="nowrap"><code>fred.stlouisfed.org/<br>graph/fredgraph.csv</code></td>
+      <td>FOMC target range, claims, GDP, PCE actuals</td>
+      <td class="nowrap">none</td>
+      <td>keyless CSV export. Two hard-won constraints: requesting <b>multiple
+          series returns a ZIP</b>, and <b>long daily-series windows time out
+          server-side</b> — so every call is single-series over a narrow per-event
+          window (<code>cosd</code>/<code>coed</code>, e.g. FOMC day2 −15/+10 days),
+          each cached 24&nbsp;h under a window-specific name</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<h3>Series used</h3>
+<ul class="kbd-list">
+  <li><b>BLS</b>: <code>CUSR0000SA0</code> (CPI-U SA, m/m), <code>CUUR0000SA0</code>
+      (CPI-U NSA, y/y), <code>CUSR0000SA0L1E</code> (core CPI SA),
+      <code>WPSFD4</code> (PPI final demand SA, m/m), <code>WPUFD4</code> (NSA, y/y),
+      <code>CES0000000001</code> (nonfarm payrolls level, Δ = monthly gain in
+      thousands), <code>LNS14000000</code> (unemployment rate).</li>
+  <li><b>FRED</b>: <code>DFEDTARU</code>/<code>DFEDTARL</code> (target range bounds;
+      the change shows up the day <i>after</i> the decision, which is how
+      held/cut/raised is computed), <code>ECBDFR</code> (ECB deposit facility rate —
+      changes take effect ~a week after the decision, so the comparison window
+      extends 12 days and reports "inconclusive" until past the effective date),
+      <code>ICSA</code> (initial claims, observations are week-ending Saturdays —
+      keyed directly by the event's <code>release_for</code>),
+      <code>A191RL1Q225SBEA</code> (real GDP % q/q SAAR, observation at quarter
+      start), <code>PCEPI</code>/<code>PCEPILFE</code> (PCE price indexes, m/m),
+      <code>RSAFS</code>/<code>RSFSXMV</code> (retail sales, m/m headline and
+      ex-autos), <code>DGORDER</code> (durable goods orders, m/m).</li>
+</ul>
+
+<div class="warn">
+<b>Rejected sources (so nobody re-attempts them)</b>
+<code>www.bls.gov</code> schedule pages and <code>fred.stlouisfed.org</code> HTML
+are behind Akamai bot protection (403/hang for non-browser clients) — we
+deliberately do not fight that; BEA/Census/ISM have no keyless machine-readable
+schedules; Trading Economics guest API excludes the US; ForexFactory's feed only
+covers the current week.
+</div>
+</section>
+
+<!-- ================================================================ -->
+<section id="summaries">
+<h2><span class="num">7</span>Summaries (<code>summarize</code> column)</h2>
+
+<p>Only <code>actual</code> rows get summaries. Dispatch by <code>sym</code> in
+<code>summaries.py</code>:</p>
+
+<div class="tbl-wrap">
+<table>
+  <thead><tr><th>sym</th><th>source</th><th>example</th></tr></thead>
+  <tbody>
+    <tr><td class="nowrap"><code>CPI</code></td><td class="nowrap">BLS</td>
+        <td><code>CPI May 2026: m/m +0.5%, y/y +4.2%, core m/m +0.2% (BLS).</code></td></tr>
+    <tr><td class="nowrap"><code>PPI</code></td><td class="nowrap">BLS</td>
+        <td><code>PPI final demand May 2026: m/m +0.2%, y/y +2.6% (BLS).</code></td></tr>
+    <tr><td class="nowrap"><code>NFP</code></td><td class="nowrap">BLS</td>
+        <td><code>Nonfarm payrolls +172k in May 2026; unemployment rate 4.3% (BLS).</code></td></tr>
+    <tr><td class="nowrap"><code>JOBLESS_CLAIMS</code></td><td class="nowrap">FRED <code>ICSA</code></td>
+        <td><code>Initial jobless claims 225k, week ending 2026-05-30 (DOL via FRED).</code></td></tr>
+    <tr><td class="nowrap"><code>FOMC</code></td><td class="nowrap">FRED <code>DFEDTARU/L</code></td>
+        <td><code>FOMC cut rates 25bp to 3.50–3.75% (upper bound was 4.00%).</code></td></tr>
+    <tr><td class="nowrap"><code>GDP</code></td><td class="nowrap">FRED <code>A191RL1Q225SBEA</code></td>
+        <td><code>Real GDP Q1 2026 (advance estimate): +1.6% q/q SAAR (BEA via FRED, current vintage).</code></td></tr>
+    <tr><td class="nowrap"><code>PCE</code></td><td class="nowrap">FRED <code>PCEPI(LFE)</code></td>
+        <td><code>PCE price index April 2026: +0.4% m/m; core +0.2% m/m (BEA via FRED, current vintage).</code></td></tr>
+    <tr><td class="nowrap"><code>RETAIL_SALES</code></td><td class="nowrap">FRED <code>RSAFS(+RSFSXMV)</code></td>
+        <td><code>Retail sales May 2026: +0.3% m/m; ex-autos +0.2% m/m (Census via FRED, current vintage).</code></td></tr>
+    <tr><td class="nowrap"><code>DURABLE_GOODS</code></td><td class="nowrap">FRED <code>DGORDER</code></td>
+        <td><code>Durable goods orders April 2026: +0.5% m/m (Census via FRED, current vintage).</code></td></tr>
+    <tr><td class="nowrap"><code>ECB</code></td><td class="nowrap">FRED <code>ECBDFR</code></td>
+        <td><code>ECB held the deposit facility rate at 2.00%.</code></td></tr>
+    <tr><td class="nowrap"><code>AUCTION_*</code></td><td class="nowrap">TreasuryDirect (via <code>Event.ref</code>)</td>
+        <td><code>Treasury 10-year note reopening: high yield 4.538%, bid-to-cover 2.57, $39B.</code></td></tr>
+    <tr><td class="nowrap">everything else</td><td class="nowrap">—</td>
+        <td>the event's descriptive <code>summary_fallback</code> text</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="note">
+<b>Caveats by design</b>
+<ul>
+  <li><b>Current vintage, not first print.</b> Keyless sources serve today's
+      revised series. For a date summarized shortly after release the value
+      <i>is</i> the released figure; summarizing a year-old NFP date quotes the
+      revised number.</li>
+  <li><b>Partial data degrades gracefully</b>: CPI/PPI print whichever of
+      m/m / y/y / core are computable (e.g. Nov 2025 CPI shows y/y only because
+      the shutdown cancelled the Oct 2025 index, breaking the m/m base). If
+      nothing is computable, or the event is same-day and the data hasn't landed
+      in the API yet, the fallback text is used.</li>
+  <li>Any summarizer exception is caught, warned to stderr, and falls back — a
+      summary problem never fails the batch date.</li>
+</ul>
+</div>
+</section>
+
+<!-- ================================================================ -->
+<section id="caching">
+<h2><span class="num">8</span>Caching, concurrency, failure behavior</h2>
+
+<p><code>http_cache.cached_text(name, fetch, ttl_hours)</code> backs every
+network call, storing under <code>cache/</code> (gitignored, safe to delete):</p>
+
+<ul>
+  <li><b>flock per cache entry</b> — the batch runner launches 18 processes at
+      once; the lock makes a cold cache cost one fetch while the other 17 wait
+      and read the result. This is also what keeps the BLS 25-requests/day budget
+      intact.</li>
+  <li><b>atomic writes</b> (tmp file + <code>os.replace</code>) — no torn reads.</li>
+  <li><b>TTL + stale-on-error</b> — fresh entries are served from disk; on fetch
+      failure a stale entry is served with a stderr warning, or <code>None</code>
+      if there is none. Validation happens <i>inside</i> the fetch callback, so
+      invalid payloads (rate-limit JSON, HTML error pages) are never written into
+      the cache.</li>
+</ul>
+
+<h3>Degradation ladder</h3>
+<div class="tbl-wrap">
+<table>
+  <thead><tr><th>failure</th><th>effect</th></tr></thead>
+  <tbody>
+    <tr><td class="nowrap">no FRED key</td>
+        <td>release dates fall to <span class="badge b-rule">rule</span>; JOLTS rows absent</td></tr>
+    <tr><td class="nowrap">FRED API down</td>
+        <td>same as no key (stale cache used if present)</td></tr>
+    <tr><td class="nowrap">BLS API down / rate-limited</td>
+        <td>CPI/PPI/NFP summaries fall to descriptive text</td></tr>
+    <tr><td class="nowrap">fredgraph down</td>
+        <td>FOMC/ECB/claims/GDP/PCE/retail/durables summaries fall to descriptive text</td></tr>
+    <tr><td class="nowrap">TreasuryDirect down</td>
+        <td><code>AUCTION_*</code> rows absent (stale cache used if present); QRA unaffected</td></tr>
+    <tr><td class="nowrap">fully offline</td>
+        <td>event list still produced from rules + embedded tables (no auctions); all summaries descriptive</td></tr>
+  </tbody>
+</table>
+</div>
+
+<p>The only nonzero-exit conditions are genuine bugs or filesystem write
+failures — by design, so a flaky network can't mark batch dates as FAIL.</p>
+</section>
+
+<!-- ================================================================ -->
+<section id="operations">
+<h2><span class="num">9</span>Operations</h2>
+
+<pre><code># daily (cron/launchd): rewrite a sliding window so recent days flip to
+# "actual" with summaries and the future stays populated
+python ~/.claude/skills/save_data/scripts/batch_save.py \
+    scripts/save_market_moving_events.py $(date -v-5d +%Y%m%d)-$(date -v+30d +%Y%m%d)
+
+# spot-check a date without writing
+python scripts/save_market_moving_events.py --date 20260617</code></pre>
+
+<h3>Maintenance checklist</h3>
+<ul>
+  <li><b>Yearly</b>: extend the embedded calendars — <code>FOMC_MEETINGS</code>,
+      <code>ECB_DECISIONS</code>, <code>BOJ_DECISIONS_JST</code> (stderr warnings
+      appear for uncovered years; all three banks publish 1–2 years ahead).</li>
+  <li><b>Quarterly-ish</b>: append the next <code>QRA_DATES</code> entry — each
+      refunding statement names the next date (Nov 2026 not yet confirmed as of
+      June 2026).</li>
+  <li><b>Recommended</b>: configure a FRED key; it upgrades BLS/BEA/Census dates
+      to the published schedule (including future dates) and adds JOLTS.</li>
+  <li>Release ids live in <code>FRED_RELEASES</code> with expected names; a
+      mismatch warns and disables that release rather than emitting wrong dates.</li>
+</ul>
+</section>
+
+<!-- ================================================================ -->
+<section id="extending">
+<h2><span class="num">10</span>Adding a new event type</h2>
+
+<ol>
+  <li>Write a generator in <code>schedules.py</code> returning
+      <code>[Event]</code> only when the event falls exactly on the requested
+      date; wire it into <code>events_for</code>. Set
+      <code>schedule_source</code> honestly
+      (<span class="badge b-official">official</span> only for published-calendar
+      or methodology-fixed dates) and always provide a
+      <code>summary_fallback</code>.</li>
+  <li>If actuals are freely available, add a summarizer in
+      <code>summaries.py</code> and register it in <code>_SUMMARIZERS</code>; put
+      whatever context it needs in <code>Event.ref</code>. Keep fredgraph windows
+      narrow (<a href="#endpoints">§6</a>).</li>
+  <li>Document the sym in <code>README.md</code> and in <a href="#catalog">§4</a> above.</li>
+  <li>Spot-check a known past date (summary fills) and a future date
+      (<code>expected</code>), then batch a small range and confirm
+      <code>OK</code> for every day.</li>
+</ol>
+</section>
+
+</main>
+</body>
+</html>
