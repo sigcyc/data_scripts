@@ -17,7 +17,7 @@ def main(
     df = build_events_df(date)
 
     if write:
-        base = Path(data_dir).expanduser() / DF_TYPE if data_dir else get_data_path(DF_TYPE)
+        base = Path(data_dir).expanduser() if data_dir else get_data_path(DF_TYPE)
         path = base / f"{date}.parquet"
         path.parent.mkdir(parents=True, exist_ok=True)
         df.write_parquet(path)
