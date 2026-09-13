@@ -123,8 +123,8 @@ def main(
     finally:
         tmp_file.unlink(missing_ok=True)
 
-    base = Path(data_dir or get_data_dir())
-    path = base / NAME / f"{date}.parquet"
+    base = Path(data_dir) if data_dir else Path(get_data_dir()) / NAME
+    path = base / f"{date}.parquet"
 
     if write:
         path.parent.mkdir(parents=True, exist_ok=True)
