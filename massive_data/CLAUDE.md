@@ -1,24 +1,24 @@
-# massive_stock_data
+# massive_data
 
 Downloads US stock OHLCV data from Massive S3 (`files.massive.com`) and saves as parquet files.
 
 ## Scripts
 
-- **`save_stock_data_day.py`** — Daily aggregates. Downloads from S3, enriches with splits/dividends/ticker types from Polygon API.
-- **`save_stock_data_min1.py`** — 1-minute aggregates. Downloads from S3.
+- **`save_us_stock_day.py`** — Daily aggregates. Downloads from S3, enriches with splits/dividends/ticker types from Polygon API.
+- **`save_us_stock_min1.py`** — 1-minute aggregates. Downloads from S3.
 
 ## Usage
 
 Single date (typer CLI):
 ```bash
-python save_stock_data_day.py --date 20230101 --write
-python save_stock_data_min1.py --date 20230101 --write
+python save_us_stock_day.py --date 20230101 --write
+python save_us_stock_min1.py --date 20230101 --write
 ```
 
 Date range via `save_data` skill:
 ```bash
-/save_data stock_data_day 20230101-20231231
-/save_data stock_data_min1 20230101-20231231
+/save_data us_stock_day 20230101-20231231
+/save_data us_stock_min1 20230101-20231231
 ```
 
 ## Data Sources
