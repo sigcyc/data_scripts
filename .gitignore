@@ -37,3 +37,7 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Downloaded financial API responses
+.financials_cache/
+.financials_staging/

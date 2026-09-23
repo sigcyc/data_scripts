@@ -1,4 +1,6 @@
 polars
+pyarrow
+typer
 pandas
 lxml
 requests
