@@ -43,7 +43,11 @@ def _load_env() -> None:
 
 
 _load_env()
-SEC_BASE = "https://www.sec.gov/files/structureddata/data/form-13f-data-sets/"
+# SEC moved newer zips (from 01jun2026-31aug2026) to a new path; older ones stay put
+SEC_BASES = (
+    "https://www.sec.gov/files/datastandardsinnovation/data/form-13f-data-sets/",
+    "https://www.sec.gov/files/structureddata/data/form-13f-data-sets/",
+)
 SEC_HEADERS = {"User-Agent": os.environ.get("SEC_USER_AGENT", "form13f-dataset simonchen1992@gmail.com")}
 FIGI_URL = "https://api.openfigi.com/v3/mapping"
 FIGI_KEY = os.environ.get("OPENFIGI_API_KEY", "")
@@ -117,12 +121,14 @@ def download_zip(period: date) -> Path | None:
     if dest.exists():
         return dest
     RAW_DIR.mkdir(parents=True, exist_ok=True)
-    url = SEC_BASE + name
-    print(f"{period:%Y%m%d}: downloading {url}", flush=True)
-    r = requests.get(url, headers=SEC_HEADERS, stream=True, timeout=(10, 900))
-    if r.status_code in (403, 404):
+    for base in SEC_BASES:
+        r = requests.get(base + name, headers=SEC_HEADERS, stream=True, timeout=(10, 900))
+        if r.status_code not in (403, 404):
+            break
+    else:
         print(f"{period:%Y%m%d}: {name} not available on SEC site yet (HTTP {r.status_code})")
         return None
+    print(f"{period:%Y%m%d}: downloading {r.url}", flush=True)
     r.raise_for_status()
     tmp = dest.with_suffix(".part")
     with open(tmp, "wb") as f:
